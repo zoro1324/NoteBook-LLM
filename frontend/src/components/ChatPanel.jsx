@@ -1,8 +1,18 @@
 import { useState, useRef, useEffect } from 'react'
+import { chatApi } from '../services/api'
 
-export default function ChatPanel({ messages, onMessagesChange, selectedDocuments }) {
+export default function ChatPanel({
+    messages,
+    onMessagesChange,
+    selectedDocuments,
+    documents,
+    notebookId,
+    conversationId,
+    onConversationIdChange
+}) {
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [streamingContent, setStreamingContent] = useState('')
     const messagesEndRef = useRef(null)
     const fileInputRef = useRef(null)
 
@@ -12,7 +22,7 @@ export default function ChatPanel({ messages, onMessagesChange, selectedDocument
 
     useEffect(() => {
         scrollToBottom()
-    }, [messages])
+    }, [messages, streamingContent])
 
     const handleSend = async () => {
         if (!input.trim() || isLoading) return
@@ -25,23 +35,50 @@ export default function ChatPanel({ messages, onMessagesChange, selectedDocument
         }
 
         onMessagesChange([...messages, userMessage])
+        const messageText = input
         setInput('')
         setIsLoading(true)
+        setStreamingContent('')
 
-        // TODO: Connect to Django backend
-        // const response = await fetch('http://localhost:8000/api/chat/', { ... })
+        try {
+            // Try to use the API
+            const response = await chatApi.send(
+                messageText,
+                selectedDocuments,
+                conversationId,
+                notebookId
+            )
 
-        // Mock AI response
-        setTimeout(() => {
+            // Update conversation ID if new
+            if (response.conversation_id && !conversationId) {
+                onConversationIdChange?.(response.conversation_id)
+            }
+
+            // Add AI response
+            const aiMessage = {
+                id: response.message?.id || Date.now(),
+                role: 'assistant',
+                content: response.message?.content || response.content || 'No response received',
+                citations: response.citations || []
+            }
+
+            onMessagesChange(prev => [...prev, aiMessage])
+
+        } catch (err) {
+            console.error('Chat error:', err)
+
+            // Fallback response when backend is not available
             const aiMessage = {
                 id: Date.now(),
                 role: 'assistant',
-                content: 'Based on the selected sources, I can help you understand the content. Please upload some documents first, and I\'ll analyze them to provide accurate, cited responses.',
-                citations: selectedDocuments.length > 0 ? [{ index: 1, source: 'Document 1' }] : []
+                content: `I'm unable to connect to the AI backend. Please ensure:\n\n1. Django is running: \`python manage.py runserver\`\n2. Ollama is running: \`ollama serve\`\n3. A model is pulled: \`ollama pull phi3:mini\`\n\nError: ${err.message}`,
+                citations: []
             }
             onMessagesChange(prev => [...prev, aiMessage])
+        } finally {
             setIsLoading(false)
-        }, 1500)
+            setStreamingContent('')
+        }
     }
 
     const handleKeyPress = (e) => {
@@ -53,6 +90,12 @@ export default function ChatPanel({ messages, onMessagesChange, selectedDocument
 
     const hasMessages = messages.length > 0
     const hasSources = selectedDocuments.length > 0
+
+    // Get selected document names for display
+    const selectedDocNames = documents
+        ?.filter(d => selectedDocuments.includes(d.id))
+        .map(d => d.title)
+        .join(', ')
 
     return (
         <div className="panel chat-panel">
@@ -68,9 +111,7 @@ export default function ChatPanel({ messages, onMessagesChange, selectedDocument
                 <div className="chat-messages">
                     {!hasMessages ? (
                         <div className="upload-prompt">
-                            <div className="upload-icon">
-                                ⬆️
-                            </div>
+                            <div className="upload-icon">⬆️</div>
                             <h2 className="upload-title">Add a source to get started</h2>
                             <button
                                 className="upload-btn"
@@ -87,19 +128,23 @@ export default function ChatPanel({ messages, onMessagesChange, selectedDocument
                             />
                         </div>
                     ) : (
-                        <>
+                        <div style={{ width: '100%', padding: '0 16px' }}>
                             {messages.map((msg) => (
                                 <div key={msg.id} className={`message ${msg.role}`}>
                                     <div className="message-avatar">
                                         {msg.role === 'user' ? '👤' : '🤖'}
                                     </div>
                                     <div className="message-content">
-                                        {msg.content}
+                                        <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
                                         {msg.citations && msg.citations.length > 0 && (
-                                            <div style={{ marginTop: '8px' }}>
+                                            <div style={{ marginTop: '12px' }}>
                                                 {msg.citations.map((citation, idx) => (
-                                                    <span key={idx} className="citation-chip">
-                                                        [{citation.index}]
+                                                    <span
+                                                        key={idx}
+                                                        className="citation-chip"
+                                                        title={citation.document_title || citation.chunk_text}
+                                                    >
+                                                        [{citation.citation_index || idx + 1}]
                                                     </span>
                                                 ))}
                                             </div>
@@ -108,7 +153,17 @@ export default function ChatPanel({ messages, onMessagesChange, selectedDocument
                                 </div>
                             ))}
 
-                            {isLoading && (
+                            {/* Streaming content */}
+                            {streamingContent && (
+                                <div className="message assistant">
+                                    <div className="message-avatar">🤖</div>
+                                    <div className="message-content">
+                                        {streamingContent}
+                                    </div>
+                                </div>
+                            )}
+
+                            {isLoading && !streamingContent && (
                                 <div className="message assistant">
                                     <div className="message-avatar">🤖</div>
                                     <div className="message-content">
@@ -117,9 +172,22 @@ export default function ChatPanel({ messages, onMessagesChange, selectedDocument
                                 </div>
                             )}
                             <div ref={messagesEndRef} />
-                        </>
+                        </div>
                     )}
                 </div>
+
+                {/* Selected Sources Indicator */}
+                {hasSources && (
+                    <div style={{
+                        padding: '8px 24px',
+                        background: 'rgba(0, 191, 165, 0.1)',
+                        borderTop: '1px solid var(--border-color)',
+                        fontSize: '12px',
+                        color: 'var(--accent-teal)'
+                    }}>
+                        📎 Using: {selectedDocNames}
+                    </div>
+                )}
 
                 {/* Chat Input */}
                 <div className="chat-input-container">
@@ -131,7 +199,6 @@ export default function ChatPanel({ messages, onMessagesChange, selectedDocument
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyPress={handleKeyPress}
-                            disabled={!hasSources && !hasMessages}
                         />
                         <span className="sources-count">{selectedDocuments.length} sources</span>
                         <button

@@ -1,75 +1,49 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { notebooksApi } from '../services/api'
 
 export default function HomePage() {
     const navigate = useNavigate()
-    const [viewMode, setViewMode] = useState('grid') // grid or list
-    const [activeTab, setActiveTab] = useState('my') // all, my, featured
-    const [sortBy, setSortBy] = useState('recent')
+    const [viewMode, setViewMode] = useState('grid')
+    const [activeTab, setActiveTab] = useState('my')
+    const [notebooks, setNotebooks] = useState([])
+    const [loading, setLoading] = useState(true)
+    const [error, setError] = useState(null)
 
-    // Mock notebooks - will come from backend
-    const [notebooks, setNotebooks] = useState([
-        {
-            id: '2873ee77-e042-4497-8f67-133dccb81e9d',
-            title: 'Untitled notebook',
-            date: '2 Feb 2026',
-            sources: 0,
-            icon: '📊',
-            color: '#4285f4'
-        },
-        {
-            id: 'abc123-def456',
-            title: 'Direct Memory Access (DMA) in Tamil',
-            date: '13 Nov 2025',
-            sources: 1,
-            icon: '💻',
-            color: '#00bcd4'
-        },
-        {
-            id: 'def456-ghi789',
-            title: 'Von Neumann Architecture in Tamil',
-            date: '13 Nov 2025',
-            sources: 1,
-            icon: '🖥️',
-            color: '#ff9800'
-        },
-        {
-            id: 'ghi789-jkl012',
-            title: 'Algebra and Combinatorics...',
-            date: '16 Nov 2025',
-            sources: 1,
-            icon: '📐',
-            color: '#00bcd4'
-        },
-        {
-            id: 'jkl012-mno345',
-            title: 'Computer Addressing Modes in Tamil',
-            date: '14 Nov 2025',
-            sources: 1,
-            icon: '📚',
-            color: '#e91e63'
-        },
-        {
-            id: 'mno345-pqr678',
-            title: 'MIPS Processor Addressing Modes...',
-            date: '13 Nov 2025',
-            sources: 1,
-            icon: '⚙️',
-            color: '#00bcd4'
-        },
-        {
-            id: 'pqr678-stu901',
-            title: 'Data and Control Hazards in Tamil',
-            date: '13 Nov 2025',
-            sources: 1,
-            icon: '⚠️',
-            color: '#ff9800'
+    // Fetch notebooks from backend
+    useEffect(() => {
+        loadNotebooks()
+    }, [])
+
+    const loadNotebooks = async () => {
+        try {
+            setLoading(true)
+            const data = await notebooksApi.list()
+            setNotebooks(data.results || data)
+            setError(null)
+        } catch (err) {
+            console.error('Failed to load notebooks:', err)
+            setError('Failed to load notebooks. Make sure the backend is running.')
+            // Use mock data as fallback
+            setNotebooks([])
+        } finally {
+            setLoading(false)
         }
-    ])
+    }
 
-    const createNewNotebook = () => {
-        const newId = crypto.randomUUID()
-        navigate(`/notebook/${newId}`)
+    const createNewNotebook = async () => {
+        try {
+            const newNotebook = await notebooksApi.create({
+                title: 'Untitled notebook',
+                icon: '📓',
+                color: '#4285f4'
+            })
+            navigate(`/notebook/${newNotebook.id}`)
+        } catch (err) {
+            // Fallback to client-side UUID if backend fails
+            const newId = crypto.randomUUID()
+            navigate(`/notebook/${newId}`)
+        }
     }
 
     const openNotebook = (id) => {
@@ -146,51 +120,74 @@ export default function HomePage() {
                 </div>
             </div>
 
+            {/* Error Message */}
+            {error && (
+                <div style={{
+                    padding: '16px 32px',
+                    background: 'rgba(244, 67, 54, 0.1)',
+                    color: '#f44336',
+                    borderBottom: '1px solid rgba(244, 67, 54, 0.3)'
+                }}>
+                    ⚠️ {error}
+                </div>
+            )}
+
             {/* Section Title */}
             <div className="home-section-title">
                 <h2>My notebooks</h2>
             </div>
 
-            {/* Notebooks Grid */}
-            <div className={`notebooks-${viewMode}`}>
-                {/* Create New Card */}
-                <div className="notebook-card create-card" onClick={createNewNotebook}>
-                    <div className="create-icon">
-                        <span>+</span>
-                    </div>
-                    <span className="create-text">Create new notebook</span>
+            {/* Loading State */}
+            {loading ? (
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    padding: '48px'
+                }}>
+                    <span className="loading-spinner" style={{ width: 32, height: 32 }}></span>
                 </div>
-
-                {/* Notebook Cards */}
-                {notebooks.map(notebook => (
-                    <div
-                        key={notebook.id}
-                        className="notebook-card"
-                        onClick={() => openNotebook(notebook.id)}
-                    >
-                        <div className="notebook-card-header">
-                            <div
-                                className="notebook-icon"
-                                style={{ backgroundColor: notebook.color }}
-                            >
-                                <span>{notebook.icon}</span>
-                            </div>
-                            <button className="notebook-menu" onClick={(e) => e.stopPropagation()}>
-                                ⋮
-                            </button>
+            ) : (
+                /* Notebooks Grid */
+                <div className={`notebooks-${viewMode}`}>
+                    {/* Create New Card */}
+                    <div className="notebook-card create-card" onClick={createNewNotebook}>
+                        <div className="create-icon">
+                            <span>+</span>
                         </div>
-                        <div className="notebook-card-content">
-                            <h3 className="notebook-title">{notebook.title}</h3>
-                            <div className="notebook-meta">
-                                <span>{notebook.date}</span>
-                                <span>•</span>
-                                <span>{notebook.sources} source{notebook.sources !== 1 ? 's' : ''}</span>
-                                {notebook.sources > 0 && <span className="audio-icon">🔊</span>}
-                            </div>
-                        </div>
+                        <span className="create-text">Create new notebook</span>
                     </div>
-                ))}
-            </div>
+
+                    {/* Notebook Cards */}
+                    {notebooks.map(notebook => (
+                        <div
+                            key={notebook.id}
+                            className="notebook-card"
+                            onClick={() => openNotebook(notebook.id)}
+                        >
+                            <div className="notebook-card-header">
+                                <div
+                                    className="notebook-icon"
+                                    style={{ backgroundColor: notebook.color }}
+                                >
+                                    <span>{notebook.icon}</span>
+                                </div>
+                                <button className="notebook-menu" onClick={(e) => e.stopPropagation()}>
+                                    ⋮
+                                </button>
+                            </div>
+                            <div className="notebook-card-content">
+                                <h3 className="notebook-title">{notebook.title}</h3>
+                                <div className="notebook-meta">
+                                    <span>{notebook.date || new Date(notebook.updated_at).toLocaleDateString()}</span>
+                                    <span>•</span>
+                                    <span>{notebook.source_count || 0} source{notebook.source_count !== 1 ? 's' : ''}</span>
+                                    {notebook.source_count > 0 && <span className="audio-icon">🔊</span>}
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
     )
 }
