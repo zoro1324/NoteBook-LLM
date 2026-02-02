@@ -1,0 +1,43 @@
+# Django Backend
+Django>=5.0,<5.1
+djangorestframework>=3.14.0
+django-cors-headers>=4.3.0
+channels>=4.0.0
+channels-redis>=4.1.0
+
+# LLM Integration
+ollama>=0.1.0
+
+# Document Processing
+PyPDF2>=3.0.0
+python-docx>=1.1.0
+Pillow>=10.0.0
+python-magic-bin>=0.4.14  # For file type detection on Windows
+
+# Audio Processing
+faster-whisper>=0.10.0
+pydub>=0.25.1
+
+# Image Generation
+diffusers>=0.27.0
+transformers>=4.38.0
+accelerate>=0.27.0
+torch>=2.2.0
+torchvision>=0.17.0
+xformers>=0.0.24  # For memory optimization
+safetensors>=0.4.0
+
+# Vector Search & Embeddings
+sentence-transformers>=2.3.0
+faiss-cpu>=1.7.4
+chromadb>=0.4.0
+
+# Audio Generation
+audiocraft>=1.2.0
+TTS>=0.20.0  # Coqui TTS (includes Piper-like models)
+
+# Utilities
+python-decouple>=3.8  # For environment variables
+pyyaml>=6.0
+requests>=2.31.0
+tqdm>=4.66.0
