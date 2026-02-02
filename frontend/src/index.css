@@ -760,3 +760,313 @@ body {
 .relative {
   position: relative;
 }
+
+/* ==================== HOMEPAGE STYLES ==================== */
+
+.home-container {
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+/* Home Header */
+.home-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.home-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.home-logo {
+  font-size: 24px;
+}
+
+.home-brand {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.home-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.pro-badge {
+  padding: 4px 8px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent-teal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+/* Home Controls */
+.home-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md) var(--spacing-xl);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.home-tabs {
+  display: flex;
+  gap: var(--spacing-xs);
+}
+
+.home-tab {
+  padding: 8px 16px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-full);
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.home-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.home-tab.active {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.home-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.view-toggle {
+  display: flex;
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  padding: 2px;
+}
+
+.view-btn {
+  padding: 8px 12px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.view-btn.active {
+  background: var(--bg-elevated);
+  color: var(--text-primary);
+}
+
+.sort-btn {
+  padding: 8px 16px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-full);
+  font-family: var(--font-family);
+  font-size: 14px;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.sort-btn:hover {
+  background: var(--bg-hover);
+}
+
+/* Section Title */
+.home-section-title {
+  padding: var(--spacing-lg) var(--spacing-xl) var(--spacing-md);
+}
+
+.home-section-title h2 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+/* Notebooks Grid */
+.notebooks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--spacing-md);
+  padding: 0 var(--spacing-xl) var(--spacing-xl);
+}
+
+.notebooks-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: 0 var(--spacing-xl) var(--spacing-xl);
+}
+
+/* Notebook Card */
+.notebook-card {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.notebook-card:hover {
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.notebook-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--spacing-md);
+  padding-bottom: 0;
+}
+
+.notebook-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+
+.notebook-menu {
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  opacity: 0;
+  transition: all 0.2s ease;
+}
+
+.notebook-card:hover .notebook-menu {
+  opacity: 1;
+}
+
+.notebook-menu:hover {
+  background: var(--bg-hover);
+}
+
+.notebook-card-content {
+  padding: var(--spacing-md);
+}
+
+.notebook-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-xs);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notebook-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.audio-icon {
+  margin-left: auto;
+  opacity: 0.7;
+}
+
+/* Create New Card */
+.create-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  border-style: dashed;
+  border-color: var(--border-color);
+}
+
+.create-card:hover {
+  border-color: var(--accent-teal);
+  background: rgba(0, 191, 165, 0.05);
+}
+
+.create-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-md);
+}
+
+.create-text {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* Notebook Page Specific */
+.notebook-title-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-family);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  min-width: 200px;
+}
+
+.notebook-title-input:hover {
+  background: var(--bg-hover);
+}
+
+.notebook-title-input:focus {
+  background: var(--bg-tertiary);
+}
+
+.back-btn {
+  font-size: 20px !important;
+  margin-right: var(--spacing-sm);
+}
