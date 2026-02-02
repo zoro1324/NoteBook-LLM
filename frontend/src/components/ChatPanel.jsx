@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react'
 
-export default function ChatPanel({ conversation, selectedDocuments }) {
-    const [messages, setMessages] = useState([])
+export default function ChatPanel({ messages, onMessagesChange, selectedDocuments }) {
     const [input, setInput] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const messagesEndRef = useRef(null)
+    const fileInputRef = useRef(null)
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -18,28 +18,30 @@ export default function ChatPanel({ conversation, selectedDocuments }) {
         if (!input.trim() || isLoading) return
 
         const userMessage = {
+            id: Date.now(),
             role: 'user',
             content: input,
             citations: []
         }
 
-        setMessages([...messages, userMessage])
+        onMessagesChange([...messages, userMessage])
         setInput('')
         setIsLoading(true)
 
-        // TODO: Send to backend and get AI response
-        // const response = await fetch('/api/chat', { ... })
+        // TODO: Connect to Django backend
+        // const response = await fetch('http://localhost:8000/api/chat/', { ... })
 
-        // Mock response
+        // Mock AI response
         setTimeout(() => {
             const aiMessage = {
+                id: Date.now(),
                 role: 'assistant',
-                content: 'This is a placeholder response. Connect to the Django backend to get real AI responses from Ollama.',
-                citations: []
+                content: 'Based on the selected sources, I can help you understand the content. Please upload some documents first, and I\'ll analyze them to provide accurate, cited responses.',
+                citations: selectedDocuments.length > 0 ? [{ index: 1, source: 'Document 1' }] : []
             }
-            setMessages(prev => [...prev, aiMessage])
+            onMessagesChange(prev => [...prev, aiMessage])
             setIsLoading(false)
-        }, 1000)
+        }, 1500)
     }
 
     const handleKeyPress = (e) => {
@@ -49,73 +51,102 @@ export default function ChatPanel({ conversation, selectedDocuments }) {
         }
     }
 
+    const hasMessages = messages.length > 0
+    const hasSources = selectedDocuments.length > 0
+
     return (
         <div className="panel chat-panel">
             <div className="panel-header">
                 <span className="panel-title">Chat</span>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="btn-icon">⚙</button>
+                    <button className="btn-icon">⋮</button>
+                </div>
             </div>
 
             <div className="chat-container">
                 <div className="chat-messages">
-                    {messages.length === 0 ? (
-                        <div className="empty-state">
-                            <div className="empty-state-icon">💬</div>
-                            <div className="empty-state-text">
-                                {selectedDocuments.length === 0
-                                    ? 'Select some sources to start chatting'
-                                    : 'Ask questions about your sources'}
+                    {!hasMessages ? (
+                        <div className="upload-prompt">
+                            <div className="upload-icon">
+                                ⬆️
                             </div>
+                            <h2 className="upload-title">Add a source to get started</h2>
+                            <button
+                                className="upload-btn"
+                                onClick={() => fileInputRef.current?.click()}
+                            >
+                                Upload a source
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                multiple
+                                accept=".pdf,.docx,.txt,.md,.mp3,.wav,.mp4"
+                                style={{ display: 'none' }}
+                            />
                         </div>
                     ) : (
-                        messages.map((msg, idx) => (
-                            <div key={idx} className={`message ${msg.role}`}>
-                                <div className="message-avatar">
-                                    {msg.role === 'user' ? 'U' : 'AI'}
+                        <>
+                            {messages.map((msg) => (
+                                <div key={msg.id} className={`message ${msg.role}`}>
+                                    <div className="message-avatar">
+                                        {msg.role === 'user' ? '👤' : '🤖'}
+                                    </div>
+                                    <div className="message-content">
+                                        {msg.content}
+                                        {msg.citations && msg.citations.length > 0 && (
+                                            <div style={{ marginTop: '8px' }}>
+                                                {msg.citations.map((citation, idx) => (
+                                                    <span key={idx} className="citation-chip">
+                                                        [{citation.index}]
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="message-content">
-                                    {msg.content}
-                                    {msg.citations && msg.citations.length > 0 && (
-                                        <div style={{ marginTop: '8px' }}>
-                                            {msg.citations.map((citation, cidx) => (
-                                                <span key={cidx} className="citation-chip">
-                                                    [{cidx + 1}]
-                                                </span>
-                                            ))}
-                                        </div>
-                                    )}
+                            ))}
+
+                            {isLoading && (
+                                <div className="message assistant">
+                                    <div className="message-avatar">🤖</div>
+                                    <div className="message-content">
+                                        <span className="loading-spinner" />
+                                    </div>
                                 </div>
-                            </div>
-                        ))
+                            )}
+                            <div ref={messagesEndRef} />
+                        </>
                     )}
-                    {isLoading && (
-                        <div className="message assistant">
-                            <div className="message-avatar">AI</div>
-                            <div className="message-content">
-                                <span className="loading-spinner"></span>
-                            </div>
-                        </div>
-                    )}
-                    <div ref={messagesEndRef} />
                 </div>
 
+                {/* Chat Input */}
                 <div className="chat-input-container">
                     <div className="chat-input-wrapper">
-                        <textarea
+                        <input
+                            type="text"
                             className="chat-input"
-                            placeholder="Ask anything about your sources..."
+                            placeholder={hasSources ? "Ask anything about your sources..." : "Upload a source to get started"}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyPress={handleKeyPress}
-                            rows={1}
+                            disabled={!hasSources && !hasMessages}
                         />
+                        <span className="sources-count">{selectedDocuments.length} sources</span>
                         <button
-                            className="btn btn-primary"
+                            className="send-btn"
                             onClick={handleSend}
                             disabled={!input.trim() || isLoading}
                         >
-                            Send
+                            →
                         </button>
                     </div>
+                </div>
+
+                {/* Footer */}
+                <div className="footer-text">
+                    NotebookLLM can be inaccurate; please double-check its responses.
                 </div>
             </div>
         </div>
