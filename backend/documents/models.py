@@ -18,8 +18,8 @@ class Document(models.Model):
         ('url', 'Web URL'),
     ]
     
-    title = models.CharField(max_length=255)
-    file_type = models.CharField(max_length=10, choices=FILE_TYPES)
+    title = models.CharField(max_length=255, blank=True, default='Untitled')
+    file_type = models.CharField(max_length=10, choices=FILE_TYPES, blank=True, default='txt')
     file = models.FileField(upload_to='documents/', null=True, blank=True)
     url = models.URLField(null=True, blank=True)  # For web URLs
     

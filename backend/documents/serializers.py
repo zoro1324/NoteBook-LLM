@@ -23,6 +23,10 @@ class DocumentSerializer(serializers.ModelSerializer):
 
 class DocumentUploadSerializer(serializers.ModelSerializer):
     """Serializer for file uploads"""
+    title = serializers.CharField(required=False, allow_blank=True)
+    file = serializers.FileField(required=False)
+    url = serializers.URLField(required=False, allow_blank=True)
+    
     class Meta:
         model = Document
         fields = ['id', 'title', 'file', 'url']
