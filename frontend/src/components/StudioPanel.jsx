@@ -1,146 +1,114 @@
 import { useState } from 'react'
 
 export default function StudioPanel({ selectedDocuments }) {
-    const [activeTab, setActiveTab] = useState('image')
-    const [prompt, setPrompt] = useState('')
-    const [generating, setGenerating] = useState(false)
+    const [generating, setGenerating] = useState(null)
     const [generatedItems, setGeneratedItems] = useState([])
 
-    const handleGenerate = async () => {
-        if (!prompt.trim() || generating) return
+    const studioOptions = [
+        { id: 'audio', icon: '🎧', label: 'Audio Overview' },
+        { id: 'video', icon: '🎬', label: 'Video Overview' },
+        { id: 'mindmap', icon: '🔗', label: 'Mind Map' },
+        { id: 'reports', icon: '📄', label: 'Reports' },
+        { id: 'flashcards', icon: '📚', label: 'Flashcards' },
+        { id: 'quiz', icon: '❓', label: 'Quiz' },
+        { id: 'infographic', icon: '📊', label: 'Infographic' },
+        { id: 'slides', icon: '📽', label: 'Slide deck' },
+        { id: 'datatable', icon: '📋', label: 'Data table' },
+    ]
 
-        setGenerating(true)
+    const handleGenerate = async (optionId) => {
+        if (selectedDocuments.length === 0) {
+            alert('Please select some sources first!')
+            return
+        }
 
-        // TODO: Call backend API for generation
-        // const response = await fetch(`/api/generate/${activeTab}`, { ... })
+        setGenerating(optionId)
 
-        // Mock generation
+        // TODO: Connect to backend
         setTimeout(() => {
             const item = {
                 id: Date.now(),
-                type: activeTab,
-                prompt: prompt,
-                url: `https://via.placeholder.com/400?text=${activeTab}`,
+                type: optionId,
+                title: `Generated ${optionId}`,
                 createdAt: new Date()
             }
             setGeneratedItems([item, ...generatedItems])
-            setPrompt('')
-            setGenerating(false)
+            setGenerating(null)
         }, 2000)
     }
 
     return (
-        <div className="panel studio-panel">
+        <div className="panel studio-panel relative">
             <div className="panel-header">
                 <span className="panel-title">Studio</span>
-            </div>
-
-            <div className="generation-tabs">
-                <button
-                    className={`tab ${activeTab === 'image' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('image')}
-                >
-                    🎨 Image
-                </button>
-                <button
-                    className={`tab ${activeTab === 'audio' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('audio')}
-                >
-                    🎵 Audio
-                </button>
-                <button
-                    className={`tab ${activeTab === 'video' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('video')}
-                >
-                    🎬 Video
-                </button>
-                <button
-                    className={`tab ${activeTab === 'guide' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('guide')}
-                >
-                    📚 Guide
-                </button>
+                <button className="btn-icon">📋</button>
             </div>
 
             <div className="panel-content">
-                <div style={{ marginBottom: '16px' }}>
-                    <textarea
-                        className="chat-input"
-                        placeholder={`Describe the ${activeTab} you want to generate...`}
-                        value={prompt}
-                        onChange={(e) => setPrompt(e.target.value)}
-                        rows={3}
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            border: '1px solid var(--border)',
-                            borderRadius: 'var(--radius-md)',
-                            fontFamily: 'var(--font-family)',
-                            fontSize: '14px'
-                        }}
-                    />
-                    <button
-                        className="btn btn-primary"
-                        onClick={handleGenerate}
-                        disabled={!prompt.trim() || generating}
-                        style={{ marginTop: '8px', width: '100%' }}
-                    >
-                        {generating ? (
-                            <>
-                                <span className="loading-spinner"></span>
-                                Generating...
-                            </>
-                        ) : (
-                            `Generate ${activeTab}`
-                        )}
-                    </button>
+                {/* Rainbow Banner */}
+                <div className="studio-banner">
+                    <span className="studio-banner-text">
+                        Create an Audio Overview in: हिन्दी , বাংলা , ગુજરાતી , ಕನ್ನಡ , മലയാളം , मराठी , ਪੰਜਾਬੀ , தமிழ் , తెలుగు
+                    </span>
                 </div>
 
-                {generatedItems.filter(item => item.type === activeTab).length === 0 ? (
-                    <div className="empty-state">
-                        <div className="empty-state-icon">✨</div>
-                        <div className="empty-state-text">
-                            No {activeTab}s generated yet
+                {/* Studio Options Grid */}
+                <div className="studio-grid">
+                    {studioOptions.map(option => (
+                        <div
+                            key={option.id}
+                            className="studio-option"
+                            onClick={() => handleGenerate(option.id)}
+                            style={{
+                                opacity: generating === option.id ? 0.7 : 1,
+                                pointerEvents: generating ? 'none' : 'auto'
+                            }}
+                        >
+                            <span className="studio-option-icon">
+                                {generating === option.id ? (
+                                    <span className="loading-spinner" />
+                                ) : (
+                                    option.icon
+                                )}
+                            </span>
+                            <span className="studio-option-label">{option.label}</span>
+                        </div>
+                    ))}
+                </div>
+
+                {/* Generated Items or Empty State */}
+                {generatedItems.length === 0 ? (
+                    <div className="studio-empty">
+                        <div className="studio-empty-icon">✨</div>
+                        <div className="studio-empty-title">Studio output will be saved here.</div>
+                        <div className="studio-empty-text">
+                            After adding sources, click to add Audio Overview, study guide, mind map and more!
                         </div>
                     </div>
                 ) : (
-                    generatedItems
-                        .filter(item => item.type === activeTab)
-                        .map(item => (
-                            <div key={item.id} className="generated-item">
-                                {item.type === 'image' && (
-                                    <img src={item.url} alt={item.prompt} className="generated-preview" />
-                                )}
-                                {item.type === 'audio' && (
-                                    <div className="generated-preview" style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '48px'
-                                    }}>
-                                        🎵
-                                    </div>
-                                )}
-                                {item.type === 'video' && (
-                                    <div className="generated-preview" style={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        justifyContent: 'center',
-                                        fontSize: '48px'
-                                    }}>
-                                        🎬
-                                    </div>
-                                )}
-                                <div className="generated-info">
-                                    <div className="generated-prompt">{item.prompt}</div>
-                                    <div className="generated-meta">
+                    <div style={{ marginTop: '16px' }}>
+                        {generatedItems.map(item => (
+                            <div key={item.id} className="document-card">
+                                <span className="document-icon">
+                                    {studioOptions.find(o => o.id === item.type)?.icon || '📄'}
+                                </span>
+                                <div className="document-info">
+                                    <div className="document-title">{item.title}</div>
+                                    <div className="document-meta">
                                         {new Date(item.createdAt).toLocaleDateString()}
                                     </div>
                                 </div>
                             </div>
-                        ))
+                        ))}
+                    </div>
                 )}
             </div>
+
+            {/* Add Note Button */}
+            <button className="add-note-btn">
+                <span>📝</span>
+                Add note
+            </button>
         </div>
     )
 }
