@@ -1,7 +1,16 @@
 import { useState, useRef } from 'react'
+import { documentsApi } from '../services/api'
 
-export default function SourcesPanel({ documents, selectedDocuments, onDocumentsChange, onSelectionChange }) {
+export default function SourcesPanel({
+    documents,
+    selectedDocuments,
+    onDocumentsChange,
+    onSelectionChange,
+    onUpload,
+    onRemove
+}) {
     const [uploading, setUploading] = useState(false)
+    const [uploadError, setUploadError] = useState(null)
     const fileInputRef = useRef(null)
 
     const handleFileUpload = async (e) => {
@@ -9,18 +18,25 @@ export default function SourcesPanel({ documents, selectedDocuments, onDocuments
         if (files.length === 0) return
 
         setUploading(true)
+        setUploadError(null)
 
-        // Simulate upload - connect to backend later
-        const newDocs = files.map((file, index) => ({
-            id: Date.now() + index,
-            title: file.name,
-            file_type: file.name.split('.').pop().toUpperCase(),
-            word_count: Math.floor(Math.random() * 5000) + 500,
-            processed: true
-        }))
-
-        onDocumentsChange([...documents, ...newDocs])
-        setUploading(false)
+        try {
+            for (const file of files) {
+                if (onUpload) {
+                    await onUpload(file)
+                } else {
+                    // Direct upload if no handler provided
+                    const doc = await documentsApi.upload(file)
+                    onDocumentsChange([...documents, doc])
+                }
+            }
+        } catch (err) {
+            console.error('Upload failed:', err)
+            setUploadError('Failed to upload file. Make sure the backend is running.')
+        } finally {
+            setUploading(false)
+            e.target.value = '' // Reset input
+        }
     }
 
     const toggleDocument = (docId) => {
@@ -31,15 +47,22 @@ export default function SourcesPanel({ documents, selectedDocuments, onDocuments
         }
     }
 
+    const handleRemove = async (e, docId) => {
+        e.stopPropagation()
+        if (onRemove) {
+            await onRemove(docId)
+        }
+    }
+
     const getFileIcon = (type) => {
         const icons = {
-            'PDF': '📄',
-            'DOCX': '📝',
-            'TXT': '📃',
-            'MD': '📋',
-            'MP3': '🎵',
-            'WAV': '🎵',
-            'MP4': '🎬'
+            'pdf': '📄',
+            'docx': '📝',
+            'txt': '📃',
+            'md': '📋',
+            'audio': '🎵',
+            'video': '🎬',
+            'url': '🌐'
         }
         return icons[type] || '📄'
     }
@@ -77,6 +100,21 @@ export default function SourcesPanel({ documents, selectedDocuments, onDocuments
                     style={{ display: 'none' }}
                 />
 
+                {/* Upload Error */}
+                {uploadError && (
+                    <div style={{
+                        padding: '8px 12px',
+                        marginBottom: '12px',
+                        background: 'rgba(244, 67, 54, 0.1)',
+                        border: '1px solid rgba(244, 67, 54, 0.3)',
+                        borderRadius: '8px',
+                        color: '#f44336',
+                        fontSize: '12px'
+                    }}>
+                        {uploadError}
+                    </div>
+                )}
+
                 {/* Deep Research Card */}
                 <div className="deep-research-card">
                     <span className="deep-research-icon">✨</span>
@@ -111,13 +149,26 @@ export default function SourcesPanel({ documents, selectedDocuments, onDocuments
                                 onClick={() => toggleDocument(doc.id)}
                             >
                                 <div className="document-checkbox">
-                                    {selectedDocuments.includes(doc.id) && <span style={{ color: '#000', fontSize: 12 }}>✓</span>}
+                                    {selectedDocuments.includes(doc.id) && (
+                                        <span style={{ color: '#000', fontSize: 12 }}>✓</span>
+                                    )}
                                 </div>
                                 <span className="document-icon">{getFileIcon(doc.file_type)}</span>
                                 <div className="document-info">
                                     <div className="document-title">{doc.title}</div>
-                                    <div className="document-meta">{doc.file_type} • {doc.word_count.toLocaleString()} words</div>
+                                    <div className="document-meta">
+                                        {doc.file_type?.toUpperCase()} • {doc.word_count?.toLocaleString() || 0} words
+                                        {doc.processed === false && ' • Processing...'}
+                                    </div>
                                 </div>
+                                <button
+                                    className="btn-icon"
+                                    onClick={(e) => handleRemove(e, doc.id)}
+                                    title="Remove"
+                                    style={{ opacity: 0.5 }}
+                                >
+                                    ×
+                                </button>
                             </div>
                         ))}
                     </div>
@@ -126,7 +177,7 @@ export default function SourcesPanel({ documents, selectedDocuments, onDocuments
                         <div className="empty-state-icon">📁</div>
                         <div className="empty-state-title">Saved sources will appear here</div>
                         <div className="empty-state-text">
-                            Click Add source above to add PDFs, websites, text, videos or audio files. Or import a file directly from Google Drive.
+                            Click Add source above to add PDFs, websites, text, videos or audio files.
                         </div>
                     </div>
                 )}

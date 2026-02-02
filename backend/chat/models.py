@@ -1,11 +1,41 @@
 from django.db import models
 from documents.models import Document
+import uuid
+
+
+class Notebook(models.Model):
+    """
+    Represents a notebook - the main container for documents and conversations.
+    This maps to the homepage notebook cards.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    title = models.CharField(max_length=255, default="Untitled notebook")
+    icon = models.CharField(max_length=10, default="📓")  # Emoji icon
+    color = models.CharField(max_length=7, default="#4285f4")  # Hex color
+    
+    # Related documents
+    documents = models.ManyToManyField(Document, related_name='notebooks', blank=True)
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-updated_at']
+    
+    def __str__(self):
+        return self.title
+    
+    @property
+    def source_count(self):
+        return self.documents.count()
 
 
 class Conversation(models.Model):
     """
-    Chat conversation thread with documents.
+    Chat conversation thread within a notebook.
     """
+    notebook = models.ForeignKey(Notebook, on_delete=models.CASCADE, related_name='conversations', null=True, blank=True)
     title = models.CharField(max_length=255, default="New Chat")
     documents = models.ManyToManyField(Document, related_name='conversations', blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
