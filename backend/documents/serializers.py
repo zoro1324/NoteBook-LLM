@@ -12,13 +12,17 @@ class DocumentChunkSerializer(serializers.ModelSerializer):
 class DocumentSerializer(serializers.ModelSerializer):
     file_size = serializers.ReadOnlyField()
     filename = serializers.ReadOnlyField()
+    chunk_count = serializers.SerializerMethodField()
     
     class Meta:
         model = Document
         fields = ['id', 'title', 'file_type', 'file', 'url', 'word_count',
-                  'summary', 'created_at', 'updated_at', 'processed', 
-                  'file_size', 'filename']
-        read_only_fields = ['processed', 'word_count', 'summary']
+                  'summary', 'created_at', 'updated_at', 'processed', 'embedded',
+                  'file_size', 'filename', 'chunk_count', 'processing_error']
+        read_only_fields = ['processed', 'embedded', 'word_count', 'summary', 'processing_error']
+    
+    def get_chunk_count(self, obj):
+        return obj.chunks.count()
 
 
 class DocumentUploadSerializer(serializers.ModelSerializer):
@@ -39,8 +43,10 @@ class DocumentUploadSerializer(serializers.ModelSerializer):
             type_map = {
                 'pdf': 'pdf',
                 'docx': 'docx', 'doc': 'docx',
+                'pptx': 'pptx', 'ppt': 'pptx',
                 'txt': 'txt',
                 'md': 'md', 'markdown': 'md',
+                'png': 'image', 'jpg': 'image', 'jpeg': 'image', 'gif': 'image',
                 'mp3': 'audio', 'wav': 'audio', 'ogg': 'audio',
                 'mp4': 'video', 'webm': 'video', 'mov': 'video',
             }

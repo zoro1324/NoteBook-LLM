@@ -1,0 +1,25 @@
+# GPU/AI Generation Requirements
+# Install these AFTER base requirements if you want generation features
+# NOTE: Install torch first, then xformers
+
+# PyTorch (install with CUDA support from pytorch.org if needed)
+torch>=2.2.0
+torchvision>=0.17.0
+
+# Image Generation
+diffusers>=0.27.0
+transformers>=4.38.0
+accelerate>=0.27.0
+safetensors>=0.4.0
+
+# Memory optimization (install AFTER torch)
+# xformers>=0.0.24
+
+# Vector Search & Embeddings
+sentence-transformers>=2.3.0
+faiss-cpu>=1.7.4
+chromadb>=0.4.0
+
+# Audio Generation (optional, may have compatibility issues)
+# audiocraft>=1.2.0
+# TTS>=0.20.0

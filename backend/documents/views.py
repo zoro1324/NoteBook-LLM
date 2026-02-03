@@ -8,12 +8,13 @@ from .serializers import (
     DocumentSerializer, DocumentUploadSerializer, 
     DocumentChunkSerializer, NotebookGuideSerializer
 )
-from .services import get_processor, DocumentProcessor
+from .services import get_processor
 
 
 class DocumentViewSet(viewsets.ModelViewSet):
     """
     API endpoint for documents (CRUD + file upload).
+    Integrates with RAG pipeline for semantic chunking and embedding.
     """
     queryset = Document.objects.all()
     parser_classes = [MultiPartParser, FormParser]
@@ -23,15 +24,35 @@ class DocumentViewSet(viewsets.ModelViewSet):
             return DocumentUploadSerializer
         return DocumentSerializer
     
+    def _get_rag_service(self):
+        """Lazy load RAG service"""
+        from rag.rag_service import rag_service
+        return rag_service
+    
     def perform_create(self, serializer):
         """Process document after upload"""
         document = serializer.save()
         
-        # Process the document in background (for now, sync)
+        # Process the document: extract text, chunk, and embed
         self.process_document(document)
     
+    def perform_destroy(self, instance):
+        """Remove document from vector store when deleted"""
+        try:
+            rag_service = self._get_rag_service()
+            rag_service.remove_document(instance.id)
+        except Exception as e:
+            print(f"[Document] Failed to remove from vector store: {e}")
+        
+        instance.delete()
+    
     def process_document(self, document):
-        """Extract text and create chunks"""
+        """
+        Full document processing pipeline:
+        1. Extract text using appropriate processor
+        2. Semantic chunking via RAG service
+        3. Generate embeddings and store in vector store
+        """
         try:
             processor = get_processor(document.file_type)
             if not processor:
@@ -39,8 +60,9 @@ class DocumentViewSet(viewsets.ModelViewSet):
                 document.save()
                 return
             
-            # Extract text
+            # Step 1: Extract text
             if document.file:
+                print(f"[Document] Extracting text from {document.file.path}")
                 text, metadata = processor.extract_text(document.file.path)
             elif document.url:
                 # URL processing would go here
@@ -55,21 +77,50 @@ class DocumentViewSet(viewsets.ModelViewSet):
             document.processed = True
             document.save()
             
-            # Create chunks for RAG
-            chunks = DocumentProcessor.chunk_text(text)
-            for i, (chunk_text, start, end) in enumerate(chunks):
-                DocumentChunk.objects.create(
-                    document=document,
-                    chunk_text=chunk_text,
-                    chunk_index=i,
-                    start_char=start,
-                    end_char=end,
-                    page_number=metadata.get('page_number')
-                )
+            if not text.strip():
+                document.processing_error = "No text extracted from document"
+                document.save()
+                return
+            
+            # Step 2 & 3: Chunk and embed using RAG service
+            try:
+                rag_service = self._get_rag_service()
+                result = rag_service.ingest_document(document)
+                
+                print(f"[Document] Ingested: {result}")
+                
+                if result.get('error'):
+                    document.processing_error = result['error']
+                    document.save()
+                    
+            except Exception as e:
+                print(f"[Document] RAG ingestion failed: {e}")
+                # Fall back to basic chunking if RAG fails
+                self._fallback_chunking(document, text, metadata)
             
         except Exception as e:
+            import traceback
+            traceback.print_exc()
             document.processing_error = str(e)
             document.save()
+    
+    def _fallback_chunking(self, document, text, metadata):
+        """Fallback to basic chunking if RAG service fails"""
+        from .services import DocumentProcessor
+        
+        chunks = DocumentProcessor.chunk_text(text)
+        for i, (chunk_text, start, end) in enumerate(chunks):
+            DocumentChunk.objects.create(
+                document=document,
+                chunk_text=chunk_text,
+                chunk_index=i,
+                start_char=start,
+                end_char=end,
+                page_number=metadata.get('page_number')
+            )
+        
+        document.embedded = False
+        document.save()
     
     @action(detail=True, methods=['get'])
     def chunks(self, request, pk=None):
@@ -81,15 +132,96 @@ class DocumentViewSet(viewsets.ModelViewSet):
     
     @action(detail=True, methods=['post'])
     def reprocess(self, request, pk=None):
-        """Reprocess a document"""
+        """Reprocess a document - re-extract, re-chunk, and re-embed"""
         document = self.get_object()
-        document.chunks.all().delete()  # Clear existing chunks
+        
+        # Clear existing chunks
+        document.chunks.all().delete()
         document.processed = False
+        document.embedded = False
         document.processing_error = ''
         document.save()
         
+        # Remove from vector store
+        try:
+            rag_service = self._get_rag_service()
+            rag_service.remove_document(document.id)
+        except Exception as e:
+            print(f"[Document] Failed to remove from vector store: {e}")
+        
+        # Reprocess
         self.process_document(document)
-        return Response({'status': 'reprocessing complete'})
+        
+        return Response({
+            'status': 'reprocessing complete',
+            'word_count': document.word_count,
+            'embedded': document.embedded,
+            'chunk_count': document.chunks.count()
+        })
+    
+    @action(detail=True, methods=['post'])
+    def embed(self, request, pk=None):
+        """
+        Embed/re-embed a document without re-extracting text.
+        Useful if embedding model changed or embeddings were lost.
+        """
+        document = self.get_object()
+        
+        if not document.extracted_text:
+            return Response(
+                {'error': 'No extracted text to embed'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            rag_service = self._get_rag_service()
+            
+            # Remove existing embeddings
+            rag_service.remove_document(document.id)
+            
+            # Re-ingest
+            result = rag_service.ingest_document(document)
+            
+            return Response({
+                'status': 'embedding complete',
+                'chunks': result.get('chunks', 0),
+                'embedded': document.embedded
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    @action(detail=False, methods=['post'])
+    def embed_all(self, request):
+        """Embed all unembedded documents"""
+        documents = Document.objects.filter(embedded=False, processed=True)
+        
+        results = []
+        for document in documents:
+            try:
+                rag_service = self._get_rag_service()
+                result = rag_service.ingest_document(document)
+                results.append({
+                    'id': document.id,
+                    'title': document.title,
+                    'status': 'success',
+                    'chunks': result.get('chunks', 0)
+                })
+            except Exception as e:
+                results.append({
+                    'id': document.id,
+                    'title': document.title,
+                    'status': 'error',
+                    'error': str(e)
+                })
+        
+        return Response({
+            'processed': len(results),
+            'results': results
+        })
 
 
 class NotebookGuideViewSet(viewsets.ModelViewSet):
