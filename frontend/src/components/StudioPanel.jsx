@@ -1,19 +1,19 @@
 import { useState } from 'react'
 
-export default function StudioPanel({ selectedDocuments }) {
+export default function StudioPanel({ selectedDocuments, documents }) {
     const [generating, setGenerating] = useState(null)
     const [generatedItems, setGeneratedItems] = useState([])
 
     const studioOptions = [
-        { id: 'audio', icon: '🎧', label: 'Audio Overview' },
-        { id: 'video', icon: '🎬', label: 'Video Overview' },
-        { id: 'mindmap', icon: '🔗', label: 'Mind Map' },
-        { id: 'reports', icon: '📄', label: 'Reports' },
-        { id: 'flashcards', icon: '📚', label: 'Flashcards' },
-        { id: 'quiz', icon: '❓', label: 'Quiz' },
-        { id: 'infographic', icon: '📊', label: 'Infographic' },
-        { id: 'slides', icon: '📽', label: 'Slide deck' },
-        { id: 'datatable', icon: '📋', label: 'Data table' },
+        { id: 'audio', icon: '🎧', label: 'Audio Overview', desc: 'AI-generated podcast' },
+        { id: 'video', icon: '🎬', label: 'Video Overview', desc: 'Visual summary' },
+        { id: 'mindmap', icon: '🔗', label: 'Mind Map', desc: 'Concept connections' },
+        { id: 'reports', icon: '📄', label: 'Reports', desc: 'Detailed analysis' },
+        { id: 'flashcards', icon: '📚', label: 'Flashcards', desc: 'Study cards' },
+        { id: 'quiz', icon: '❓', label: 'Quiz', desc: 'Test knowledge' },
+        { id: 'infographic', icon: '📊', label: 'Infographic', desc: 'Visual data' },
+        { id: 'slides', icon: '📽', label: 'Slide deck', desc: 'Presentation' },
+        { id: 'datatable', icon: '📋', label: 'Data table', desc: 'Structured data' },
     ]
 
     const handleGenerate = async (optionId) => {
@@ -23,7 +23,6 @@ export default function StudioPanel({ selectedDocuments }) {
         }
 
         setGenerating(optionId)
-
         // TODO: Connect to backend
         setTimeout(() => {
             const item = {
@@ -37,64 +36,74 @@ export default function StudioPanel({ selectedDocuments }) {
         }, 2000)
     }
 
+    const hasSourcesSelected = selectedDocuments.length > 0
+
     return (
-        <div className="panel studio-panel relative">
-            <div className="panel-header">
-                <span className="panel-title">Studio</span>
-                <button className="btn-icon">📋</button>
+        <div className="w-[240px] bg-[#1a1a1a] flex flex-col relative">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-[#2d2d2d]">
+                <h2 className="text-sm font-normal text-[#e3e3e3]">Studio</h2>
             </div>
 
-            <div className="panel-content">
-                {/* Rainbow Banner */}
-                <div className="studio-banner">
-                    <span className="studio-banner-text">
-                        Create an Audio Overview in: हिन्दी , বাংলা , ગુજરાતી , ಕನ್ನಡ , മലയാളം , मराठी , ਪੰਜਾਬੀ , தமிழ் , తెలుగు
-                    </span>
-                </div>
+            {/* Language Banner */}
+            <div className="m-3 p-3 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-lg">
+                <p className="text-[10px] text-white leading-tight">
+                    Create an Audio Overview in: हिन्दी, বাংলা, ગુજરાતી, ಕನ್ನಡ, മലയാളം, मराठी, ਪੰਜਾਬੀ, தமிழ், తెలుగు
+                </p>
+            </div>
 
-                {/* Studio Options Grid */}
-                <div className="studio-grid">
+            {/* Studio Tools - Vertical List */}
+            <div className="flex-1 overflow-y-auto px-3">
+                <div className="space-y-1">
                     {studioOptions.map(option => (
-                        <div
+                        <button
                             key={option.id}
-                            className="studio-option"
-                            onClick={() => handleGenerate(option.id)}
-                            style={{
-                                opacity: generating === option.id ? 0.7 : 1,
-                                pointerEvents: generating ? 'none' : 'auto'
-                            }}
+                            onClick={() => hasSourcesSelected && handleGenerate(option.id)}
+                            disabled={!hasSourcesSelected || generating === option.id}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-colors ${hasSourcesSelected
+                                    ? 'hover:bg-[#2d2d2d] cursor-pointer'
+                                    : 'opacity-40 cursor-not-allowed'
+                                }`}
                         >
-                            <span className="studio-option-icon">
+                            <span className="text-xl flex-shrink-0">
                                 {generating === option.id ? (
-                                    <span className="loading-spinner" />
+                                    <span className="loading-spinner inline-block" style={{ width: 20, height: 20 }}></span>
                                 ) : (
                                     option.icon
                                 )}
                             </span>
-                            <span className="studio-option-label">{option.label}</span>
-                        </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="text-sm text-[#e3e3e3]">{option.label}</div>
+                                <div className="text-xs text-[#9aa0a6]">{option.desc}</div>
+                            </div>
+                        </button>
                     ))}
                 </div>
 
                 {/* Generated Items or Empty State */}
                 {generatedItems.length === 0 ? (
-                    <div className="studio-empty">
-                        <div className="studio-empty-icon">✨</div>
-                        <div className="studio-empty-title">Studio output will be saved here.</div>
-                        <div className="studio-empty-text">
-                            After adding sources, click to add Audio Overview, study guide, mind map and more!
-                        </div>
+                    <div className="py-8 px-4 text-center">
+                        <div className="text-3xl mb-2 opacity-20">✨</div>
+                        <p className="text-xs text-[#e3e3e3] mb-1">Studio output will be saved here.</p>
+                        <p className="text-xs text-[#9aa0a6]">
+                            {hasSourcesSelected
+                                ? 'After adding sources, click a tool to create summaries, flashcards, and more.'
+                                : 'Add and select sources first, then use Studio tools to create content.'}
+                        </p>
                     </div>
                 ) : (
-                    <div style={{ marginTop: '16px' }}>
+                    <div className="mt-4 space-y-1">
                         {generatedItems.map(item => (
-                            <div key={item.id} className="document-card">
-                                <span className="document-icon">
+                            <div
+                                key={item.id}
+                                className="flex items-center gap-2 p-2 rounded hover:bg-[#2d2d2d] cursor-pointer"
+                            >
+                                <span className="text-lg">
                                     {studioOptions.find(o => o.id === item.type)?.icon || '📄'}
                                 </span>
-                                <div className="document-info">
-                                    <div className="document-title">{item.title}</div>
-                                    <div className="document-meta">
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm text-[#e3e3e3] truncate">{item.title}</div>
+                                    <div className="text-xs text-[#9aa0a6]">
                                         {new Date(item.createdAt).toLocaleDateString()}
                                     </div>
                                 </div>
@@ -104,11 +113,13 @@ export default function StudioPanel({ selectedDocuments }) {
                 )}
             </div>
 
-            {/* Add Note Button */}
-            <button className="add-note-btn">
-                <span>📝</span>
-                Add note
-            </button>
+            {/* Add Note Button - Fixed at bottom */}
+            <div className="p-3 border-t border-[#2d2d2d]">
+                <button className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#2d2d2d] hover:bg-[#3c4043] rounded-full text-sm text-[#e3e3e3] transition-colors">
+                    <span>📝</span>
+                    <span>Add note</span>
+                </button>
+            </div>
         </div>
     )
 }

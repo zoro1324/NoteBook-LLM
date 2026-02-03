@@ -14,7 +14,6 @@ export default function ChatPanel({
     const [isLoading, setIsLoading] = useState(false)
     const [streamingContent, setStreamingContent] = useState('')
     const messagesEndRef = useRef(null)
-    const fileInputRef = useRef(null)
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -41,7 +40,6 @@ export default function ChatPanel({
         setStreamingContent('')
 
         try {
-            // Try to use the API
             const response = await chatApi.send(
                 messageText,
                 selectedDocuments,
@@ -49,12 +47,10 @@ export default function ChatPanel({
                 notebookId
             )
 
-            // Update conversation ID if new
             if (response.conversation_id && !conversationId) {
                 onConversationIdChange?.(response.conversation_id)
             }
 
-            // Add AI response
             const aiMessage = {
                 id: response.message?.id || Date.now(),
                 role: 'assistant',
@@ -67,7 +63,6 @@ export default function ChatPanel({
         } catch (err) {
             console.error('Chat error:', err)
 
-            // Fallback response when backend is not available
             const aiMessage = {
                 id: Date.now(),
                 role: 'assistant',
@@ -91,130 +86,129 @@ export default function ChatPanel({
     const hasMessages = messages.length > 0
     const hasSources = selectedDocuments.length > 0
 
-    // Get selected document names for display
     const selectedDocNames = documents
         ?.filter(d => selectedDocuments.includes(d.id))
         .map(d => d.title)
         .join(', ')
 
     return (
-        <div className="panel chat-panel">
-            <div className="panel-header">
-                <span className="panel-title">Chat</span>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                    <button className="btn-icon">⚙</button>
-                    <button className="btn-icon">⋮</button>
+        <div className="flex-1 bg-[#0f0f0f] flex flex-col">
+            {/* Header */}
+            <div className="px-6 py-3 border-b border-[#2d2d2d] flex items-center justify-between">
+                <h2 className="text-sm font-normal text-[#e3e3e3]">Chat</h2>
+                <div className="flex gap-1">
+                    <button className="p-1.5 hover:bg-[#2d2d2d] rounded">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-[#9aa0a6]">
+                            <circle cx="12" cy="12" r="3" />
+                            <path d="M12 1v6m0 6v6m10-11h-6m-6 0H4" strokeWidth="2" />
+                        </svg>
+                    </button>
+                    <button className="p-1.5 hover:bg-[#2d2d2d] rounded">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-[#9aa0a6]">
+                            <circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" />
+                        </svg>
+                    </button>
                 </div>
             </div>
 
-            <div className="chat-container">
-                <div className="chat-messages">
-                    {!hasMessages ? (
-                        <div className="upload-prompt">
-                            <div className="upload-icon">⬆️</div>
-                            <h2 className="upload-title">Add a source to get started</h2>
-                            <button
-                                className="upload-btn"
-                                onClick={() => fileInputRef.current?.click()}
-                            >
-                                Upload a source
-                            </button>
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                multiple
-                                accept=".pdf,.docx,.txt,.md,.mp3,.wav,.mp4"
-                                style={{ display: 'none' }}
-                            />
+            {/* Messages Area */}
+            <div className="flex-1 overflow-y-auto">
+                {!hasMessages ? (
+                    <div className="h-full flex flex-col items-center justify-center text-center px-8 pb-20">
+                        <div className="w-16 h-16 bg-[#8ab4f8] rounded-full flex items-center justify-center mb-6">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                                <path d="M12 5v14M5 12h14" />
+                            </svg>
                         </div>
-                    ) : (
-                        <div style={{ width: '100%', padding: '0 16px' }}>
-                            {messages.map((msg) => (
-                                <div key={msg.id} className={`message ${msg.role}`}>
-                                    <div className="message-avatar">
-                                        {msg.role === 'user' ? '👤' : '🤖'}
-                                    </div>
-                                    <div className="message-content">
-                                        <div style={{ whiteSpace: 'pre-wrap' }}>{msg.content}</div>
-                                        {msg.citations && msg.citations.length > 0 && (
-                                            <div style={{ marginTop: '12px' }}>
-                                                {msg.citations.map((citation, idx) => (
-                                                    <span
-                                                        key={idx}
-                                                        className="citation-chip"
-                                                        title={citation.document_title || citation.chunk_text}
-                                                    >
-                                                        [{citation.citation_index || idx + 1}]
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
+                        <h3 className="text-xl text-[#e3e3e3] mb-2">Add a source to get started</h3>
+                        <p className="text-sm text-[#9aa0a6] mb-6 max-w-md">
+                            Upload PDFs, documents, or other files to chat with your sources and get AI-powered insights.
+                        </p>
+                    </div>
+                ) : (
+                    <div className="p-6 space-y-6">
+                        {messages.map((msg) => (
+                            <div key={msg.id} className="flex gap-3">
+                                <div className={`w-7 h-7 rounded-full flex items-center justify-center text-sm flex-shrink-0 ${msg.role === 'user' ? 'bg-[#8ab4f8]' : 'bg-[#ea8600]'
+                                    }`}>
+                                    {msg.role === 'user' ? '👤' : '🤖'}
                                 </div>
-                            ))}
-
-                            {/* Streaming content */}
-                            {streamingContent && (
-                                <div className="message assistant">
-                                    <div className="message-avatar">🤖</div>
-                                    <div className="message-content">
-                                        {streamingContent}
+                                <div className="flex-1">
+                                    <div className="text-sm text-[#e3e3e3] leading-relaxed whitespace-pre-wrap">
+                                        {msg.content}
                                     </div>
+                                    {msg.citations && msg.citations.length > 0 && (
+                                        <div className="flex flex-wrap gap-2 mt-2">
+                                            {msg.citations.map((citation, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    className="px-2 py-0.5 bg-[#8ab4f8]/20 text-[#8ab4f8] rounded text-xs hover:bg-[#8ab4f8]/30"
+                                                    title={citation.document_title || citation.chunk_text}
+                                                >
+                                                    [{citation.citation_index || idx + 1}]
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
-                            )}
+                            </div>
+                        ))}
 
-                            {isLoading && !streamingContent && (
-                                <div className="message assistant">
-                                    <div className="message-avatar">🤖</div>
-                                    <div className="message-content">
-                                        <span className="loading-spinner" />
-                                    </div>
+                        {streamingContent && (
+                            <div className="flex gap-3">
+                                <div className="w-7 h-7 rounded-full bg-[#ea8600] flex items-center justify-center text-sm flex-shrink-0">🤖</div>
+                                <div className="flex-1 text-sm text-[#e3e3e3]">{streamingContent}</div>
+                            </div>
+                        )}
+
+                        {isLoading && !streamingContent && (
+                            <div className="flex gap-3">
+                                <div className="w-7 h-7 rounded-full bg-[#ea8600] flex items-center justify-center text-sm flex-shrink-0">🤖</div>
+                                <div className="flex-1">
+                                    <span className="loading-spinner inline-block" style={{ width: 16, height: 16 }}></span>
                                 </div>
-                            )}
-                            <div ref={messagesEndRef} />
-                        </div>
-                    )}
-                </div>
-
-                {/* Selected Sources Indicator */}
-                {hasSources && (
-                    <div style={{
-                        padding: '8px 24px',
-                        background: 'rgba(0, 191, 165, 0.1)',
-                        borderTop: '1px solid var(--border-color)',
-                        fontSize: '12px',
-                        color: 'var(--accent-teal)'
-                    }}>
-                        📎 Using: {selectedDocNames}
+                            </div>
+                        )}
+                        <div ref={messagesEndRef} />
                     </div>
                 )}
+            </div>
 
-                {/* Chat Input */}
-                <div className="chat-input-container">
-                    <div className="chat-input-wrapper">
-                        <input
-                            type="text"
-                            className="chat-input"
-                            placeholder={hasSources ? "Ask anything about your sources..." : "Upload a source to get started"}
-                            value={input}
-                            onChange={(e) => setInput(e.target.value)}
-                            onKeyPress={handleKeyPress}
-                        />
-                        <span className="sources-count">{selectedDocuments.length} sources</span>
-                        <button
-                            className="send-btn"
-                            onClick={handleSend}
-                            disabled={!input.trim() || isLoading}
-                        >
-                            →
-                        </button>
-                    </div>
+            {/* Selected Sources Indicator */}
+            {hasSources && (
+                <div className="px-6 py-2 bg-[#8ab4f8]/10 border-t border-[#8ab4f8]/20 text-xs text-[#8ab4f8]">
+                    Using: {selectedDocNames}
                 </div>
+            )}
 
-                {/* Footer */}
-                <div className="footer-text">
-                    NotebookLLM can be inaccurate; please double-check its responses.
+            {/* Input Area */}
+            <div className="px-6 py-4 border-t border-[#2d2d2d]">
+                <div className="bg-[#2d2d2d] rounded-full flex items-center px-4 py-2 focus-within:ring-1 focus-within:ring-[#8ab4f8]">
+                    <input
+                        type="text"
+                        className="flex-1 bg-transparent border-none outline-none text-sm text-[#e3e3e3] placeholder-[#9aa0a6]"
+                        placeholder={hasSources ? "Ask anything..." : "Upload a source to get started"}
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        onKeyPress={handleKeyPress}
+                        disabled={!hasSources}
+                    />
+                    <span className="px-2 py-1 text-xs text-[#9aa0a6]">{selectedDocuments.length} sources</span>
+                    <button
+                        onClick={handleSend}
+                        disabled={!input.trim() || isLoading || !hasSources}
+                        className="ml-2 w-7 h-7 bg-[#8ab4f8] rounded-full flex items-center justify-center hover:bg-[#aecbfa] disabled:bg-[#5f6368] disabled:cursor-not-allowed transition-colors"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                            <path d="M5 12h14M12 5l7 7-7 7" />
+                        </svg>
+                    </button>
                 </div>
+            </div>
+
+            {/* Footer */}
+            <div className="text-center py-2 text-[10px] text-[#9aa0a6]">
+                NotebookLLM can be inaccurate; please double-check its responses.
             </div>
         </div>
     )

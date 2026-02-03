@@ -19,7 +19,6 @@ export default function NotebookPage() {
     const [loading, setLoading] = useState(true)
     const [conversationId, setConversationId] = useState(null)
 
-    // Load notebook data from backend
     useEffect(() => {
         loadNotebook()
     }, [id])
@@ -31,7 +30,6 @@ export default function NotebookPage() {
             setNotebook(data)
             setDocuments(data.documents || [])
 
-            // Get first conversation if exists
             if (data.conversations && data.conversations.length > 0) {
                 const conv = data.conversations[0]
                 setConversationId(conv.id)
@@ -39,7 +37,6 @@ export default function NotebookPage() {
             }
         } catch (err) {
             console.error('Failed to load notebook:', err)
-            // Create new notebook if it doesn't exist
             try {
                 const newNotebook = await notebooksApi.create({
                     id: id,
@@ -86,48 +83,54 @@ export default function NotebookPage() {
     }
 
     return (
-        <div className="app-container">
+        <div className="h-screen flex flex-col bg-[#0f0f0f]">
             {/* Header */}
-            <header className="header">
-                <div className="header-left">
+            <header className="px-4 py-2 bg-[#1a1a1a] border-b border-[#2d2d2d] flex items-center justify-between">
+                <div className="flex items-center gap-3">
                     <button
-                        className="btn-icon back-btn"
                         onClick={() => navigate('/')}
+                        className="p-2 hover:bg-[#2d2d2d] rounded text-[#9aa0a6] hover:text-[#e3e3e3]"
                         title="Back to notebooks"
                     >
                         ←
                     </button>
-                    <div className="logo">
-                        <span style={{ fontSize: '16px' }}>📓</span>
+                    <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                        <span className="text-base">📓</span>
                     </div>
                     <input
                         type="text"
-                        className="notebook-title-input"
+                        className="bg-transparent border-none outline-none text-base font-normal text-[#e3e3e3] px-2 py-1 hover:bg-[#2d2d2d] focus:bg-[#2d2d2d] rounded min-w-[200px]"
                         value={notebook.title}
                         onChange={(e) => updateTitle(e.target.value)}
                         placeholder="Untitled notebook"
                     />
                 </div>
 
-                <div className="header-right">
-                    <button className="btn btn-primary" onClick={() => navigate('/')}>
-                        <span>+</span> Create notebook
+                <div className="flex items-center gap-2">
+                    <button className="px-4 py-1.5 bg-[#8ab4f8] text-[#0f0f0f] text-sm font-medium rounded-full hover:bg-[#aecbfa] flex items-center gap-1.5">
+                        <span>+</span>
+                        <span>Create notebook</span>
                     </button>
-                    <button className="btn btn-secondary">
-                        <span>📊</span> Analytics
+                    <button className="px-4 py-1.5 bg-transparent text-[#e3e3e3] text-sm font-medium border border-[#5f6368] rounded-full hover:bg-[#2d2d2d] flex items-center gap-1.5">
+                        <span>📊</span>
+                        <span>Analytics</span>
                     </button>
-                    <button className="btn btn-secondary">
-                        <span>↗</span> Share
+                    <button className="px-4 py-1.5 bg-transparent text-[#e3e3e3] text-sm font-medium border border-[#5f6368] rounded-full hover:bg-[#2d2d2d] flex items-center gap-1.5">
+                        <span>↗</span>
+                        <span>Share</span>
                     </button>
-                    <button className="btn btn-secondary">
-                        <span>⚙</span> Settings
+                    <button className="px-4 py-1.5 bg-transparent text-[#e3e3e3] text-sm font-medium border border-[#5f6368] rounded-full hover:bg-[#2d2d2d] flex items-center gap-1.5">
+                        <span>⚙</span>
+                        <span>Settings</span>
                     </button>
-                    <div className="avatar">👤</div>
+                    <div className="w-8 h-8 rounded-full bg-[#8ab4f8] flex items-center justify-center cursor-pointer ml-2">
+                        👤
+                    </div>
                 </div>
             </header>
 
-            {/* Main Content - Three Panels */}
-            <main className="main-content">
+            {/* Main Content */}
+            <main className="flex flex-1 overflow-hidden">
                 <SourcesPanel
                     documents={documents}
                     selectedDocuments={selectedDocuments}

@@ -26,17 +26,16 @@ export default function SourcesPanel({
                 if (onUpload) {
                     await onUpload(file)
                 } else {
-                    // Direct upload if no handler provided
                     const doc = await documentsApi.upload(file)
                     onDocumentsChange([...documents, doc])
                 }
             }
         } catch (err) {
             console.error('Upload failed:', err)
-            setUploadError('Failed to upload file. Make sure the backend is running.')
+            setUploadError('Failed to upload file.')
         } finally {
             setUploading(false)
-            e.target.value = '' // Reset input
+            e.target.value = ''
         }
     }
 
@@ -60,12 +59,10 @@ export default function SourcesPanel({
         setReprocessing(docId)
         try {
             await documentsApi.reprocess(docId)
-            // Refresh document data
             const updatedDoc = await documentsApi.get(docId)
             onDocumentsChange(documents.map(d => d.id === docId ? updatedDoc : d))
         } catch (err) {
             console.error('Reprocess failed:', err)
-            setUploadError('Failed to reprocess document.')
         } finally {
             setReprocessing(null)
         }
@@ -85,135 +82,123 @@ export default function SourcesPanel({
     }
 
     return (
-        <div className="panel sources-panel">
-            <div className="panel-header">
-                <span className="panel-title">Sources</span>
-                <button className="btn-icon">📋</button>
+        <div className="w-[240px] bg-[#1a1a1a] border-r border-[#2d2d2d] flex flex-col">
+            {/* Header */}
+            <div className="px-4 py-3 border-b border-[#2d2d2d] flex items-center justify-between">
+                <h2 className="text-sm font-normal text-[#e3e3e3]">Sources</h2>
+                <button className="p-1 hover:bg-[#2d2d2d] rounded">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-[#9aa0a6]">
+                        <path d="M12 5v14M5 12h14" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
+                </button>
             </div>
 
-            <div className="panel-content">
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto">
                 {/* Add Sources Button */}
-                <button
-                    className="add-sources-btn"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                >
-                    {uploading ? (
-                        <span className="loading-spinner" />
-                    ) : (
-                        <>
-                            <span>+</span>
-                            <span>Add sources</span>
-                        </>
-                    )}
-                </button>
+                <div className="p-3">
+                    <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={uploading}
+                        className="w-full px-3 py-2 text-sm text-[#8ab4f8] bg-transparent border border-[#8ab4f8] rounded-full hover:bg-[#8ab4f8]/10 transition-colors flex items-center justify-center gap-2"
+                    >
+                        <span>+</span>
+                        {uploading ? 'Uploading...' : 'Add sources'}
+                    </button>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        accept=".pdf,.docx,.txt,.md,.mp3,.wav,.mp4"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                    />
+                </div>
 
-                <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept=".pdf,.docx,.txt,.md,.mp3,.wav,.mp4"
-                    onChange={handleFileUpload}
-                    style={{ display: 'none' }}
-                />
+                {/* Search Section */}
+                <div className="px-3 pb-3">
+                    <p className="text-xs text-[#9aa0a6] mb-2">Search the web for new sources</p>
+                    <div className="bg-[#2d2d2d] rounded-lg p-2">
+                        <div className="flex items-center gap-2 mb-2">
+                            <button className="flex items-center gap-1 px-2 py-1 bg-[#3c4043] rounded-full text-xs text-[#e3e3e3] hover:bg-[#5f6368]">
+                                <span>🌐</span>
+                                <span>Web</span>
+                                <span className="text-[10px]">▼</span>
+                            </button>
+                            <button className="flex items-center gap-1 px-2 py-1 bg-[#3c4043] rounded-full text-xs text-[#e3e3e3] hover:bg-[#5f6368]">
+                                <span>⚡</span>
+                                <span>Fast research</span>
+                                <span className="text-[10px]">▼</span>
+                            </button>
+                        </div>
+                        <button className="w-full p-2 bg-[#3c4043] rounded text-sm text-[#9aa0a6] hover:bg-[#5f6368] flex items-center justify-center">
+                            <span>→</span>
+                        </button>
+                    </div>
+                </div>
 
-                {/* Upload Error */}
                 {uploadError && (
-                    <div style={{
-                        padding: '8px 12px',
-                        marginBottom: '12px',
-                        background: 'rgba(244, 67, 54, 0.1)',
-                        border: '1px solid rgba(244, 67, 54, 0.3)',
-                        borderRadius: '8px',
-                        color: '#f44336',
-                        fontSize: '12px'
-                    }}>
+                    <div className="mx-3 mb-2 px-2 py-1 bg-red-900/20 border border-red-700/50 rounded text-xs text-red-400">
                         {uploadError}
                     </div>
                 )}
 
-                {/* Deep Research Card */}
-                <div className="deep-research-card">
-                    <span className="deep-research-icon">✨</span>
-                    <span className="deep-research-text">
-                        <a href="#">Try Deep Research</a> for an in-depth report and new sources!
-                    </span>
-                </div>
-
-                {/* Search Section */}
-                <div className="search-container">
-                    <span className="search-label">Search the web for new sources</span>
-                    <div className="search-bar">
-                        <div className="search-options">
-                            <span className="search-option">
-                                🌐 Web ▾
-                            </span>
-                            <span className="search-option">
-                                ⚡ Fast research ▾
-                            </span>
-                        </div>
-                        <span className="search-arrow">→</span>
-                    </div>
-                </div>
-
-                {/* Document List */}
+                {/* Documents List */}
                 {documents.length > 0 ? (
-                    <div style={{ marginTop: '16px' }}>
+                    <div className="px-3 space-y-1">
                         {documents.map(doc => (
                             <div
                                 key={doc.id}
-                                className={`document-card ${selectedDocuments.includes(doc.id) ? 'selected' : ''}`}
                                 onClick={() => toggleDocument(doc.id)}
+                                className={`flex items-start gap-2 p-2 rounded cursor-pointer transition-colors ${selectedDocuments.includes(doc.id)
+                                        ? 'bg-[#8ab4f8]/20'
+                                        : 'hover:bg-[#2d2d2d]'
+                                    }`}
                             >
-                                <div className="document-checkbox">
-                                    {selectedDocuments.includes(doc.id) && (
-                                        <span style={{ color: '#000', fontSize: 12 }}>✓</span>
-                                    )}
-                                </div>
-                                <span className="document-icon">{getFileIcon(doc.file_type)}</span>
-                                <div className="document-info">
-                                    <div className="document-title">{doc.title}</div>
-                                    <div className="document-meta">
-                                        {doc.file_type?.toUpperCase()} • {doc.word_count?.toLocaleString() || 0} words
+                                <input
+                                    type="checkbox"
+                                    checked={selectedDocuments.includes(doc.id)}
+                                    onChange={() => { }}
+                                    className="mt-0.5 accent-[#8ab4f8]"
+                                />
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-1">
+                                        <span className="text-sm text-[#e3e3e3] truncate">{doc.title}</span>
+                                        {doc.word_count === 0 && doc.processed !== false ? (
+                                            <button
+                                                onClick={(e) => handleReprocess(e, doc.id)}
+                                                className="flex-shrink-0 text-[#8ab4f8] hover:text-[#aecbfa] text-xs"
+                                                disabled={reprocessing === doc.id}
+                                            >
+                                                {reprocessing === doc.id ? '⏳' : '🔄'}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={(e) => handleRemove(e, doc.id)}
+                                                className="flex-shrink-0 text-[#9aa0a6] hover:text-[#e3e3e3] text-xs"
+                                            >
+                                                ×
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="text-xs text-[#9aa0a6]">
+                                        PDF • {doc.word_count?.toLocaleString() || 0} words
                                         {doc.processed === false && ' • Processing...'}
                                         {doc.word_count === 0 && doc.processed !== false && (
-                                            <span style={{ color: '#ffab40' }}> • No text extracted</span>
+                                            <span className="text-amber-500"> • No text</span>
                                         )}
                                     </div>
                                 </div>
-                                {doc.word_count === 0 && doc.processed !== false ? (
-                                    <button
-                                        className="btn-icon"
-                                        onClick={(e) => handleReprocess(e, doc.id)}
-                                        title="Reprocess document"
-                                        style={{
-                                            opacity: reprocessing === doc.id ? 0.5 : 1,
-                                            color: '#00bfa5'
-                                        }}
-                                        disabled={reprocessing === doc.id}
-                                    >
-                                        {reprocessing === doc.id ? '⏳' : '🔄'}
-                                    </button>
-                                ) : (
-                                    <button
-                                        className="btn-icon"
-                                        onClick={(e) => handleRemove(e, doc.id)}
-                                        title="Remove"
-                                        style={{ opacity: 0.5 }}
-                                    >
-                                        ×
-                                    </button>
-                                )}
                             </div>
                         ))}
                     </div>
                 ) : (
-                    <div className="empty-state" style={{ marginTop: '60px' }}>
-                        <div className="empty-state-icon">📁</div>
-                        <div className="empty-state-title">Saved sources will appear here</div>
-                        <div className="empty-state-text">
+                    <div className="px-6 py-8 text-center">
+                        <div className="text-4xl mb-3 opacity-20">📁</div>
+                        <p className="text-sm text-[#e3e3e3] mb-1">Saved sources will appear here</p>
+                        <p className="text-xs text-[#9aa0a6]">
                             Click Add source above to add PDFs, websites, text, videos or audio files.
-                        </div>
+                        </p>
                     </div>
                 )}
             </div>
