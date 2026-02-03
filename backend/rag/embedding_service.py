@@ -62,10 +62,16 @@ class EmbeddingService:
             # Set trust_remote_code for nomic model
             trust_remote = 'nomic' in model_to_load.lower()
             
+            # Determine device - prefer CUDA if available
+            import torch
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            
             self._model = SentenceTransformer(
                 model_to_load,
-                trust_remote_code=trust_remote
+                trust_remote_code=trust_remote,
+                device=device
             )
+            print(f"[Embedding] Using device: {device.upper()}")
             self._model_name = model_to_load
             
             print(f"[Embedding] Model loaded successfully. Dimension: {self._model.get_sentence_embedding_dimension()}")

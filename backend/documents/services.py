@@ -93,12 +93,17 @@ class PDFProcessor(DocumentProcessor):
         """Get or create the OCR model (cached for performance)"""
         if cls._ocr_model is None:
             try:
+                import torch
                 from doctr.models import ocr_predictor
-                print("[PDF] Loading doctr OCR model...")
-                cls._ocr_model = ocr_predictor(pretrained=True)
-                print("[PDF] OCR model loaded successfully!")
-            except ImportError:
-                print("[PDF] doctr not installed, OCR unavailable")
+                
+                # Determine device - prefer CUDA if available
+                device = 'cuda' if torch.cuda.is_available() else 'cpu'
+                print(f"[PDF] Loading doctr OCR model on {device.upper()}...")
+                
+                cls._ocr_model = ocr_predictor(pretrained=True).to(device)
+                print(f"[PDF] OCR model loaded successfully on {device.upper()}!")
+            except ImportError as e:
+                print(f"[PDF] doctr not installed, OCR unavailable: {e}")
                 return None
             except Exception as e:
                 print(f"[PDF] Failed to load OCR model: {e}")
@@ -417,8 +422,11 @@ class ImageProcessor(DocumentProcessor):
             # Load image
             doc = DocumentFile.from_images(file_path)
             
-            # Get OCR model
-            model = ocr_predictor(pretrained=True)
+            # Get OCR model - use CUDA if available
+            import torch
+            device = 'cuda' if torch.cuda.is_available() else 'cpu'
+            model = ocr_predictor(pretrained=True).to(device)
+            print(f"[Image] Running OCR on {device.upper()}")
             result = model(doc)
             
             # Extract text

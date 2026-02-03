@@ -77,6 +77,13 @@ class DocumentViewSet(viewsets.ModelViewSet):
             document.processed = True
             document.save()
             
+            # Print extracted text for debugging
+            print(f"\n{'='*50}")
+            print(f"EXTRACTED TEXT FROM: {document.title}")
+            print(f"{'='*50}")
+            print(text)
+            print(f"{'='*50}\n")
+            
             if not text.strip():
                 document.processing_error = "No text extracted from document"
                 document.save()

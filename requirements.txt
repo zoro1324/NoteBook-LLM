@@ -19,6 +19,9 @@ python-pptx>=0.6.21  # PowerPoint processing
 
 # RAG Pipeline
 tiktoken>=0.5.0  # Token counting
+sentence-transformers>=2.2.0  # Embeddings with GPU support
+faiss-cpu>=1.7.0  # Vector similarity search
+python-doctr>=1.0.0  # GPU-accelerated OCR for PDFs/images
 
 # Audio Processing
 faster-whisper>=0.10.0
