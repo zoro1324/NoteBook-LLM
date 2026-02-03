@@ -48,15 +48,15 @@ config.yaml
 Thumbs.db
 
 # Models and data
-models/*.pt
-models/*.pth
-models/*.safetensors
-models/*.gguf
+*.pt
+*.pth
+*.safetensors
+*.gguf
 !models/.gitkeep
-data/documents/
-data/uploads/
-data/generated/
-!data/.gitkeep
+
+# Project Data
+backend/data/
+backend/media/
 
 # Node/Frontend
 node_modules/
@@ -68,3 +68,4 @@ frontend/.env.local
 # Vector stores
 chroma_db/
 faiss_index/
+vector_store/
