@@ -85,7 +85,7 @@ export default function NotebookPage() {
     return (
         <div className="h-screen flex flex-col bg-[#131314]">
             {/* Header */}
-            <header className="px-4 py-3 bg-[#131314] border-b border-[#2d2d2d] flex items-center justify-between shrink-0">
+            <header className="px-4 py-3 bg-[#131314] border-b border-[#3c4043] flex items-center justify-between shrink-0">
                 <div className="flex items-center gap-3 min-w-0">
                     {/* Back button */}
                     <button

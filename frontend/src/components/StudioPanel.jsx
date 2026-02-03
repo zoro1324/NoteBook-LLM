@@ -66,7 +66,7 @@ export default function StudioPanel({ selectedDocuments, documents }) {
     }
 
     return (
-        <div className="w-[300px] bg-[#1e1f20] flex flex-col relative border-l border-[#2d2d2d] h-full">
+        <div className="w-[300px] bg-[#1e1f20] flex flex-col relative border-l border-[#3c4043] h-full">
             {/* Header */}
             <div className="px-5 py-4 flex items-center justify-between">
                 <h2 className="text-[15px] font-medium text-[#e3e3e3]">Studio</h2>
@@ -85,72 +85,200 @@ export default function StudioPanel({ selectedDocuments, documents }) {
                 </p>
             </div>
 
-            {/* Studio Tools Grid - 2x4 Layout */}
-            <div className="px-5 pb-4">
+            {/* Studio Tools Grid */}
+            <div className="px-5 pb-4 space-y-2">
+                {/* Audio & Video */}
                 <div className="grid grid-cols-2 gap-2">
-                    {studioTools.map(tool => (
-                        <button
-                            key={tool.id}
-                            onClick={() => hasSourcesSelected && handleGenerate(tool.id)}
-                            disabled={!hasSourcesSelected || generating === tool.id}
-                            className={`group relative flex flex-col p-3 rounded-2xl text-left transition-all duration-200 border ${hasSourcesSelected
-                                    ? 'bg-[#2c3033] border-transparent hover:bg-[#353a3d]'
-                                    : 'bg-[#2c3033]/50 border-transparent opacity-50 cursor-not-allowed'
-                                }`}
-                        >
-                            <div className="flex items-start justify-between mb-1">
-                                <span className={`text-xl ${tool.color}`}>
-                                    {generating === tool.id ? (
-                                        <div className="w-5 h-5 border-2 border-[#8ab4f8] border-t-transparent rounded-full animate-spin"></div>
-                                    ) : (
-                                        tool.icon
-                                    )}
-                                </span>
-                                {/* Edit icon on hover */}
-                                <div
-                                    className="opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:text-white transition-opacity"
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        // Edit handler
-                                    }}
-                                >
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                                    </svg>
-                                </div>
+                    <button
+                        onClick={() => hasSourcesSelected && handleGenerate('audio')}
+                        disabled={!hasSourcesSelected || generating === 'audio'}
+                        title={!hasSourcesSelected ? "Add a source to use this tool" : ""}
+                        className={`group relative flex flex-col p-3 rounded-2xl text-left transition-all duration-200 border ${hasSourcesSelected
+                            ? 'bg-[#2c3033] border-transparent hover:bg-[#353a3d]'
+                            : 'bg-[#2c3033]/50 border-transparent opacity-50 cursor-not-allowed'
+                            }`}
+                    >
+                        <div className="flex items-start justify-between mb-1">
+                            <span className="text-xl text-[#c4c7c5]">
+                                {generating === 'audio' ? <div className="w-5 h-5 border-2 border-[#8ab4f8] border-t-transparent rounded-full animate-spin"></div> : '🎧'}
+                            </span>
+                            <div className="opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:text-white transition-opacity">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                             </div>
-                            <span className="text-[13px] font-medium text-[#e3e3e3] truncate">{tool.label}</span>
-                        </button>
-                    ))}
+                        </div>
+                        <span className="text-[13px] font-medium text-[#e3e3e3]">Audio Overview</span>
+                    </button>
+                    <button
+                        onClick={() => hasSourcesSelected && handleGenerate('video')}
+                        disabled={!hasSourcesSelected || generating === 'video'}
+                        title={!hasSourcesSelected ? "Add a source to use this tool" : ""}
+                        className={`group relative flex flex-col p-3 rounded-2xl text-left transition-all duration-200 border ${hasSourcesSelected
+                            ? 'bg-[#2c3033] border-transparent hover:bg-[#353a3d]'
+                            : 'bg-[#2c3033]/50 border-transparent opacity-50 cursor-not-allowed'
+                            }`}
+                    >
+                        <div className="flex items-start justify-between mb-1">
+                            <span className="text-xl text-[#c4c7c5]">
+                                {generating === 'video' ? <div className="w-5 h-5 border-2 border-[#8ab4f8] border-t-transparent rounded-full animate-spin"></div> : '🎬'}
+                            </span>
+                            <div className="opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:text-white transition-opacity">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-medium text-[#e3e3e3]">Video Overview</span>
+                    </button>
+                </div>
+
+                {/* Mind Map & Reports */}
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        onClick={() => hasSourcesSelected && handleGenerate('mindmap')}
+                        disabled={!hasSourcesSelected || generating === 'mindmap'}
+                        title={!hasSourcesSelected ? "Add a source to use this tool" : ""}
+                        className={`group relative flex flex-col p-3 rounded-2xl text-left transition-all duration-200 border ${hasSourcesSelected
+                            ? 'bg-[#1e1f20] border-[#3c4043] hover:bg-[#2c3033]'
+                            : 'bg-[#1e1f20]/50 border-[#3c4043]/50 opacity-50 cursor-not-allowed'
+                            }`}
+                    >
+                        <div className="flex items-start justify-between mb-1">
+                            <span className="text-xl text-[#c4c7c5]">
+                                {generating === 'mindmap' ? <div className="w-5 h-5 border-2 border-[#8ab4f8] border-t-transparent rounded-full animate-spin"></div> : '🔗'}
+                            </span>
+                            <div className="opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:text-white transition-opacity">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-medium text-[#e3e3e3]">Mind Map</span>
+                    </button>
+                    <button
+                        onClick={() => hasSourcesSelected && handleGenerate('reports')}
+                        disabled={!hasSourcesSelected || generating === 'reports'}
+                        title={!hasSourcesSelected ? "Add a source to use this tool" : ""}
+                        className={`group relative flex flex-col p-3 rounded-2xl text-left transition-all duration-200 border ${hasSourcesSelected
+                            ? 'bg-[#1e1f20] border-[#3c4043] hover:bg-[#2c3033]'
+                            : 'bg-[#1e1f20]/50 border-[#3c4043]/50 opacity-50 cursor-not-allowed'
+                            }`}
+                    >
+                        <div className="flex items-start justify-between mb-1">
+                            <span className="text-xl text-[#c4c7c5]">
+                                {generating === 'reports' ? <div className="w-5 h-5 border-2 border-[#8ab4f8] border-t-transparent rounded-full animate-spin"></div> : '📄'}
+                            </span>
+                            <div className="opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:text-white transition-opacity">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-medium text-[#e3e3e3]">Reports</span>
+                    </button>
+                </div>
+
+                {/* Flashcards & Quiz */}
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        onClick={() => hasSourcesSelected && handleGenerate('flashcards')}
+                        disabled={!hasSourcesSelected || generating === 'flashcards'}
+                        title={!hasSourcesSelected ? "Add a source to use this tool" : ""}
+                        className={`group relative flex flex-col p-3 rounded-2xl text-left transition-all duration-200 border ${hasSourcesSelected
+                            ? 'bg-[#1e1f20] border-[#3c4043] hover:bg-[#2c3033]'
+                            : 'bg-[#1e1f20]/50 border-[#3c4043]/50 opacity-50 cursor-not-allowed'
+                            }`}
+                    >
+                        <div className="flex items-start justify-between mb-1">
+                            <span className="text-xl text-[#c4c7c5]">
+                                {generating === 'flashcards' ? <div className="w-5 h-5 border-2 border-[#8ab4f8] border-t-transparent rounded-full animate-spin"></div> : '📚'}
+                            </span>
+                            <div className="opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:text-white transition-opacity">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-medium text-[#e3e3e3]">Flashcards</span>
+                    </button>
+                    <button
+                        onClick={() => hasSourcesSelected && handleGenerate('quiz')}
+                        disabled={!hasSourcesSelected || generating === 'quiz'}
+                        title={!hasSourcesSelected ? "Add a source to use this tool" : ""}
+                        className={`group relative flex flex-col p-3 rounded-2xl text-left transition-all duration-200 border ${hasSourcesSelected
+                            ? 'bg-[#1e1f20] border-[#3c4043] hover:bg-[#2c3033]'
+                            : 'bg-[#1e1f20]/50 border-[#3c4043]/50 opacity-50 cursor-not-allowed'
+                            }`}
+                    >
+                        <div className="flex items-start justify-between mb-1">
+                            <span className="text-xl text-[#c4c7c5]">
+                                {generating === 'quiz' ? <div className="w-5 h-5 border-2 border-[#8ab4f8] border-t-transparent rounded-full animate-spin"></div> : '❓'}
+                            </span>
+                            <div className="opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:text-white transition-opacity">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-medium text-[#e3e3e3]">Quiz</span>
+                    </button>
+                </div>
+
+                {/* Infographic & Slides */}
+                <div className="grid grid-cols-2 gap-2">
+                    <button
+                        onClick={() => hasSourcesSelected && handleGenerate('infographic')}
+                        disabled={!hasSourcesSelected || generating === 'infographic'}
+                        title={!hasSourcesSelected ? "Add a source to use this tool" : ""}
+                        className={`group relative flex flex-col p-3 rounded-2xl text-left transition-all duration-200 border ${hasSourcesSelected
+                            ? 'bg-[#1e1f20] border-[#3c4043] hover:bg-[#2c3033]'
+                            : 'bg-[#1e1f20]/50 border-[#3c4043]/50 opacity-50 cursor-not-allowed'
+                            }`}
+                    >
+                        <div className="flex items-start justify-between mb-1">
+                            <span className="text-xl text-[#c4c7c5]">
+                                {generating === 'infographic' ? <div className="w-5 h-5 border-2 border-[#8ab4f8] border-t-transparent rounded-full animate-spin"></div> : '📊'}
+                            </span>
+                            <div className="opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:text-white transition-opacity">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-medium text-[#e3e3e3]">Infographic</span>
+                    </button>
+                    <button
+                        onClick={() => hasSourcesSelected && handleGenerate('slides')}
+                        disabled={!hasSourcesSelected || generating === 'slides'}
+                        title={!hasSourcesSelected ? "Add a source to use this tool" : ""}
+                        className={`group relative flex flex-col p-3 rounded-2xl text-left transition-all duration-200 border ${hasSourcesSelected
+                            ? 'bg-[#1e1f20] border-[#3c4043] hover:bg-[#2c3033]'
+                            : 'bg-[#1e1f20]/50 border-[#3c4043]/50 opacity-50 cursor-not-allowed'
+                            }`}
+                    >
+                        <div className="flex items-start justify-between mb-1">
+                            <span className="text-xl text-[#c4c7c5]">
+                                {generating === 'slides' ? <div className="w-5 h-5 border-2 border-[#8ab4f8] border-t-transparent rounded-full animate-spin"></div> : '📽'}
+                            </span>
+                            <div className="opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:text-white transition-opacity">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
+                            </div>
+                        </div>
+                        <span className="text-[13px] font-medium text-[#e3e3e3]">Slide deck</span>
+                    </button>
                 </div>
             </div>
 
+            {/* Data Table - Full Width */}
             <div className="px-5 pb-3">
                 <button
                     onClick={() => hasSourcesSelected && handleGenerate('datatable')}
                     disabled={!hasSourcesSelected}
-                    className={`group relative w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-left transition-all border border-[#3c4043] ${hasSourcesSelected
-                        ? 'hover:bg-[#292929] hover:border-[#5f6368] cursor-pointer'
-                        : 'opacity-50 cursor-not-allowed'
+                    className={`group relative w-full flex items-center gap-3 px-3 py-3 rounded-2xl text-left transition-all border ${hasSourcesSelected
+                        ? 'bg-[#1e1f20] border-[#3c4043] hover:bg-[#2c3033]'
+                        : 'bg-[#1e1f20]/50 border-[#3c4043]/50 opacity-50 cursor-not-allowed'
                         }`}
                 >
-                    <span className="text-lg">📋</span>
-                    <span className="text-xs text-[#e3e3e3]">Data table</span>
+                    <span className="text-xl text-[#c4c7c5]">📋</span>
+                    <span className="text-[13px] font-medium text-[#e3e3e3]">Data table</span>
                     <button
-                        className="absolute top-1 right-1 p-1 opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:text-[#e3e3e3] hover:bg-[#3c4043] rounded transition-all"
+                        className="absolute top-1/2 -translate-y-1/2 right-3 p-1 opacity-0 group-hover:opacity-100 text-[#9aa0a6] hover:text-[#e3e3e3] hover:bg-[#3c4043] rounded transition-all"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                        </svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
                     </button>
                 </button>
             </div>
 
             {/* Divider */}
-            <div className="border-t border-[#2d2d2d] mx-3"></div>
+            <div className="border-t border-[#3c4043] mx-3"></div>
 
             {/* Generated Items List */}
             <div className="flex-1 overflow-y-auto px-3 py-3">

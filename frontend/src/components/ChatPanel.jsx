@@ -234,21 +234,38 @@ export default function ChatPanel({
             <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {!hasMessages ? (
                     <div className="h-full flex flex-col items-center justify-center text-center px-8 pb-20 animate-fade-in" style={{ animationDelay: '0.1s' }}>
-                        {/* Minimal Empty State */}
+                        {/* Guided Empty State */}
                         <div className="w-16 h-16 bg-gradient-to-br from-[#1e1f20] to-[#2c3033] rounded-full flex items-center justify-center mb-6 shadow-sm border border-[#3c4043]/30">
-                            <span className="text-2xl">✨</span>
+                            <span className="text-3xl">✨</span>
                         </div>
-                        <h3 className="text-[22px] text-[#e3e3e3] mb-3 font-normal">Add a source to get started</h3>
-                        <p className="text-[14px] text-[#9aa0a6] mb-8 max-w-sm leading-relaxed">
+                        <h1 className="text-3xl font-regular text-[#e3e3e3] mb-3 tracking-tight">
+                            Welcome to NotebookLM
+                        </h1>
+                        <p className="text-[15px] text-[#9aa0a6] mb-10 max-w-md leading-relaxed">
                             Upload documents to chat with your sources and get AI-powered insights.
                         </p>
+
+                        {/* Call to Actions */}
+                        <div className="flex flex-col items-center gap-4 w-full max-w-xs">
+                            <button
+                                onClick={() => document.querySelector('input[type="file"]')?.click()}
+                                className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-[#e3e3e3] hover:bg-white text-[#1f1f1f] rounded-full transition-all shadow-sm hover:shadow-md group"
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14" /></svg>
+                                <span className="text-[15px] font-medium">Add sources</span>
+                            </button>
+                            <div className="flex items-center gap-6 text-sm text-[#8ab4f8]">
+                                <button className="hover:text-[#aecbfa] hover:underline transition-colors">Paste text</button>
+                                <button className="hover:text-[#aecbfa] hover:underline transition-colors">Use a website</button>
+                            </div>
+                        </div>
                     </div>
                 ) : (
                     <div className="px-8 py-6 max-w-4xl mx-auto w-full">
                         {messages.map((msg, msgIdx) => (
-                            <div key={msg.id} className="mb-8 animate-fade-in group">
+                            <div key={msg.id} className="mb-10 animate-fade-in group">
                                 {/* Message content */}
-                                <div className="flex gap-4">
+                                <div className="flex gap-5">
                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm flex-shrink-0 mt-1 shadow-sm ${msg.role === 'user'
                                         ? 'bg-[#3c4043] border border-[#5f6368]'
                                         : 'bg-transparent'
@@ -265,9 +282,9 @@ export default function ChatPanel({
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         {msg.role === 'user' ? (
-                                            <p className="text-[15px] text-[#e3e3e3] leading-relaxed pt-1.5">{msg.content}</p>
+                                            <p className="text-[16px] text-[#e3e3e3] leading-relaxed pt-1 font-normal">{msg.content}</p>
                                         ) : (
-                                            <div className="prose-invert text-[15px] leading-relaxed">
+                                            <div className="prose-invert text-[16px] leading-7 font-normal text-[#e3e3e3]">
                                                 {renderContent(msg.content)}
                                             </div>
                                         )}
@@ -276,11 +293,11 @@ export default function ChatPanel({
 
                                 {/* Citations */}
                                 {msg.citations && msg.citations.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mt-3 ml-12">
+                                    <div className="flex flex-wrap gap-2 mt-4 ml-14">
                                         {msg.citations.map((citation, idx) => (
                                             <button
                                                 key={idx}
-                                                className="px-2.5 py-1 bg-[#2c3033] text-[#8ab4f8] rounded-lg text-xs hover:bg-[#3c4043] transition-colors flex items-center gap-1.5 border border-[#3c4043]/50"
+                                                className="px-3 py-1 bg-[#2c3033] text-[#8ab4f8] rounded-lg text-xs hover:bg-[#3c4043] transition-colors flex items-center gap-1.5 border border-[#3c4043]/50"
                                                 title={citation.document_title || citation.chunk_text}
                                             >
                                                 <span className="font-medium">[{citation.citation_index || idx + 1}]</span>
@@ -292,7 +309,7 @@ export default function ChatPanel({
 
                                 {/* Action buttons for AI responses */}
                                 {msg.role === 'assistant' && (
-                                    <div className="flex items-center gap-2 mt-3 ml-12 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                                    <div className="flex items-center gap-2 mt-3 ml-14 pl-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                         <button className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[#c4c7c5] hover:text-[#e3e3e3] hover:bg-[#2c3033] rounded-full transition-colors border border-transparent hover:border-[#3c4043]">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
@@ -346,7 +363,7 @@ export default function ChatPanel({
                                         <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
                                     </div>
                                 </div>
-                                <div className="flex-1 text-[15px] text-[#e3e3e3] leading-relaxed animate-pulse">{streamingContent}</div>
+                                <div className="flex-1 text-[16px] text-[#e3e3e3] leading-relaxed animate-pulse font-normal">{streamingContent}</div>
                             </div>
                         )}
 
@@ -373,7 +390,7 @@ export default function ChatPanel({
             <div className="px-6 pb-6 pt-2">
                 <div className="max-w-4xl mx-auto relative group">
                     <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-purple-500/20 to-pink-500/20 rounded-full blur-md opacity-0 group-focus-within:opacity-100 transition-opacity duration-500"></div>
-                    <div className="bg-[#1e1f20] rounded-[24px] flex items-center px-2 py-2 shadow-lg border border-[#3c4043]/50 focus-within:border-[#5f6368] transition-all relative z-10 min-h-[56px]">
+                    <div className="bg-[#1e1f20] rounded-[26px] flex items-center px-2 py-2 shadow-lg border border-[#3c4043]/50 focus-within:border-[#5f6368] transition-all relative z-10 min-h-[52px]">
                         <input
                             type="text"
                             className="flex-1 bg-transparent border-none outline-none text-[15px] text-[#e3e3e3] placeholder-[#8e918f] ml-4 font-normal"
@@ -398,9 +415,15 @@ export default function ChatPanel({
                                 : 'bg-[#3c4043] text-[#8e918f] cursor-not-allowed'
                                 }`}
                         >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                                <path d="M5 12h14M12 5l7 7-7 7" />
-                            </svg>
+                            {input.trim() && hasSources ? (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <path d="M5 12h14M12 5l7 7-7 7" />
+                                </svg>
+                            ) : (
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <path d="M5 12h14M12 5l7 7-7 7" />
+                                </svg>
+                            )}
                         </button>
                     </div>
                     {/* Footer Warning */}

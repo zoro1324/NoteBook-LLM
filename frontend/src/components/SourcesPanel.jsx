@@ -119,10 +119,10 @@ export default function SourcesPanel({
     const allSelected = documents.length > 0 && selectedDocuments.length === documents.length
 
     return (
-        <div className="w-[260px] bg-[#1c1c1c] border-r border-[#2d2d2d] flex flex-col">
+        <div className="w-[260px] bg-[#1c1c1c] border-r border-[#3c4043] flex flex-col">
             {/* Header */}
-            <div className="px-5 py-4 border-b border-[#2d2d2d] flex items-center justify-between">
-                <h2 className="text-sm font-medium text-[#e3e3e3]">Sources</h2>
+            <div className="px-5 py-4 border-b border-[#3c4043] flex items-center justify-between">
+                <h2 className="text-sm font-medium text-[#e3e3e3]">Sources ({documents.length})</h2>
                 <button className="p-1.5 hover:bg-[#3c4043] rounded-md transition-colors">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="text-[#9aa0a6]">
                         <rect x="3" y="3" width="7" height="7" rx="1" strokeWidth="2" />
@@ -140,7 +140,7 @@ export default function SourcesPanel({
                     <button
                         onClick={() => fileInputRef.current?.click()}
                         disabled={uploading}
-                        className="w-full h-12 flex items-center justify-center gap-3 px-4 bg-[#2c3033] hover:bg-[#353a3d] text-[#e3e3e3] rounded-[16px] transition-all shadow-sm group border border-transparent hover:border-[#3c4043]"
+                        className="w-full h-14 flex items-center justify-center gap-3 px-4 bg-[#2c3033] hover:bg-[#353a3d] text-[#e3e3e3] rounded-[16px] transition-all shadow-sm group border border-transparent hover:border-[#3c4043]"
                     >
                         <div className="w-6 h-6 rounded-full border border-[#e3e3e3] flex items-center justify-center group-hover:bg-[#e3e3e3] group-hover:text-[#1c1c1c] transition-colors">
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
