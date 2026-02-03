@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'documents',
     'chat',
     'generation',
+    'rag',
 ]
 
 MIDDLEWARE = [
