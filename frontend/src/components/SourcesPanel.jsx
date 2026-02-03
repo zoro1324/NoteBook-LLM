@@ -11,6 +11,7 @@ export default function SourcesPanel({
 }) {
     const [uploading, setUploading] = useState(false)
     const [uploadError, setUploadError] = useState(null)
+    const [reprocessing, setReprocessing] = useState(null)
     const fileInputRef = useRef(null)
 
     const handleFileUpload = async (e) => {
@@ -51,6 +52,22 @@ export default function SourcesPanel({
         e.stopPropagation()
         if (onRemove) {
             await onRemove(docId)
+        }
+    }
+
+    const handleReprocess = async (e, docId) => {
+        e.stopPropagation()
+        setReprocessing(docId)
+        try {
+            await documentsApi.reprocess(docId)
+            // Refresh document data
+            const updatedDoc = await documentsApi.get(docId)
+            onDocumentsChange(documents.map(d => d.id === docId ? updatedDoc : d))
+        } catch (err) {
+            console.error('Reprocess failed:', err)
+            setUploadError('Failed to reprocess document.')
+        } finally {
+            setReprocessing(null)
         }
     }
 
@@ -159,16 +176,34 @@ export default function SourcesPanel({
                                     <div className="document-meta">
                                         {doc.file_type?.toUpperCase()} • {doc.word_count?.toLocaleString() || 0} words
                                         {doc.processed === false && ' • Processing...'}
+                                        {doc.word_count === 0 && doc.processed !== false && (
+                                            <span style={{ color: '#ffab40' }}> • No text extracted</span>
+                                        )}
                                     </div>
                                 </div>
-                                <button
-                                    className="btn-icon"
-                                    onClick={(e) => handleRemove(e, doc.id)}
-                                    title="Remove"
-                                    style={{ opacity: 0.5 }}
-                                >
-                                    ×
-                                </button>
+                                {doc.word_count === 0 && doc.processed !== false ? (
+                                    <button
+                                        className="btn-icon"
+                                        onClick={(e) => handleReprocess(e, doc.id)}
+                                        title="Reprocess document"
+                                        style={{
+                                            opacity: reprocessing === doc.id ? 0.5 : 1,
+                                            color: '#00bfa5'
+                                        }}
+                                        disabled={reprocessing === doc.id}
+                                    >
+                                        {reprocessing === doc.id ? '⏳' : '🔄'}
+                                    </button>
+                                ) : (
+                                    <button
+                                        className="btn-icon"
+                                        onClick={(e) => handleRemove(e, doc.id)}
+                                        title="Remove"
+                                        style={{ opacity: 0.5 }}
+                                    >
+                                        ×
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>

@@ -11,8 +11,10 @@ class Document(models.Model):
     FILE_TYPES = [
         ('pdf', 'PDF Document'),
         ('docx', 'Word Document'),
+        ('pptx', 'PowerPoint'),
         ('txt', 'Text File'),
         ('md', 'Markdown File'),
+        ('image', 'Image'),
         ('audio', 'Audio File'),
         ('video', 'Video File'),
         ('url', 'Web URL'),
