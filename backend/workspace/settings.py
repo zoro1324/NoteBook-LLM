@@ -146,6 +146,8 @@ STATICFILES_DIRS = []
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # Vite default port
     "http://localhost:3000",  # Alternative React port
+    "http://localhost:8080",  # Vite fallback port
+    "http://localhost:8081",  # Vite fallback port
 ]
 CORS_ALLOW_CREDENTIALS = True
 
