@@ -33,6 +33,17 @@ class DocumentViewSet(viewsets.ModelViewSet):
         """Process document after upload"""
         document = serializer.save()
         
+        # Link to notebook if provided
+        notebook_id = self.request.data.get('notebook')
+        if notebook_id:
+            try:
+                from chat.models import Notebook
+                notebook = Notebook.objects.get(id=notebook_id)
+                notebook.documents.add(document)
+                print(f"[Document] Linked document {document.id} to notebook {notebook.title}")
+            except Exception as e:
+                print(f"[Document] Failed to link to notebook: {e}")
+        
         # Process the document: extract text, chunk, and embed
         self.process_document(document)
     

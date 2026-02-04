@@ -48,8 +48,11 @@ class Document(models.Model):
     @property
     def file_size(self):
         """Get file size in MB"""
-        if self.file:
-            return round(self.file.size / (1024 * 1024), 2)
+        try:
+            if self.file:
+                return round(self.file.size / (1024 * 1024), 2)
+        except (FileNotFoundError, ValueError):
+            pass
         return 0
     
     @property

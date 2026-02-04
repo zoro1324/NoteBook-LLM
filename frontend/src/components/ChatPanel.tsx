@@ -7,9 +7,10 @@ import { toast } from "@/components/ui/use-toast";
 
 interface ChatPanelProps {
   notebookId: string;
+  selectedDocuments: Set<number>;
 }
 
-const ChatPanel = ({ notebookId }: ChatPanelProps) => {
+const ChatPanel = ({ notebookId, selectedDocuments }: ChatPanelProps) => {
   const [inputValue, setInputValue] = useState("");
   const [conversationId, setConversationId] = useState<number | null>(null);
   const [messages, setMessages] = useState<Array<{ role: 'user' | 'assistant', content: string, citations?: Citation[] }>>([]);
@@ -53,7 +54,7 @@ const ChatPanel = ({ notebookId }: ChatPanelProps) => {
         conversation_id: conversationId || undefined,
         notebook_id: notebookId,
         message,
-        document_ids: [], // TODO: Get selected documents from SourcesPanel
+        document_ids: Array.from(selectedDocuments),
       });
       return response.data;
     },
@@ -192,7 +193,7 @@ const ChatPanel = ({ notebookId }: ChatPanelProps) => {
             className="w-full bg-background border border-border rounded-full px-4 py-3 pr-24 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:opacity-50"
           />
           <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">0 sources</span>
+            <span className="text-xs text-muted-foreground">{selectedDocuments.size} sources</span>
             <button
               onClick={handleSend}
               disabled={!inputValue.trim() || sendMessageMutation.isPending}
