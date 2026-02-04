@@ -1,213 +1,198 @@
-/* Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@400;500;600;700&display=swap');
 
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* Base Styles */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+/* NotebookLM Dark Theme Design System */
 
-body {
-  font-family: 'Google Sans', 'Inter', 'Segoe UI', 'Roboto', -apple-system, sans-serif;
-  background: #131314;
-  color: #e8eaed;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+@layer base {
+  :root {
+    /* NotebookLM uses a warm dark theme */
+    --background: 280 6% 7%;
+    --foreground: 0 0% 95%;
 
-/* Custom Scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
+    --card: 280 5% 12%;
+    --card-foreground: 0 0% 95%;
 
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+    --popover: 280 5% 12%;
+    --popover-foreground: 0 0% 95%;
 
-::-webkit-scrollbar-thumb {
-  background: #3c4043;
-  border-radius: 9999px;
-}
+    --primary: 174 72% 56%;
+    --primary-foreground: 280 6% 7%;
 
-::-webkit-scrollbar-thumb:hover {
-  background: #5f6368;
-}
+    --secondary: 280 5% 18%;
+    --secondary-foreground: 0 0% 85%;
 
-/* Loading Spinner Animation */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
+    --muted: 280 5% 15%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 280 5% 20%;
+    --accent-foreground: 0 0% 95%;
+
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 280 5% 20%;
+    --input: 280 5% 18%;
+    --ring: 174 72% 56%;
+
+    --radius: 0.75rem;
+
+    /* Custom NotebookLM colors */
+    --notebook-surface: 280 5% 14%;
+    --notebook-hover: 280 5% 18%;
+    --notebook-active: 280 5% 22%;
+    --notebook-teal: 174 72% 56%;
+    --notebook-teal-dim: 174 40% 40%;
+    --notebook-pink: 330 80% 65%;
+    --notebook-blue: 210 90% 60%;
+    --notebook-orange: 30 90% 55%;
+    --notebook-green: 140 60% 50%;
+    --notebook-yellow: 45 90% 55%;
+    
+    /* Sidebar */
+    --sidebar-background: 280 5% 10%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 174 72% 56%;
+    --sidebar-primary-foreground: 280 6% 7%;
+    --sidebar-accent: 280 5% 16%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 280 5% 18%;
+    --sidebar-ring: 174 72% 56%;
+  }
+
+  .dark {
+    /* Same as root - NotebookLM is dark-only */
+    --background: 280 6% 7%;
+    --foreground: 0 0% 95%;
+    --card: 280 5% 12%;
+    --card-foreground: 0 0% 95%;
+    --popover: 280 5% 12%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 174 72% 56%;
+    --primary-foreground: 280 6% 7%;
+    --secondary: 280 5% 18%;
+    --secondary-foreground: 0 0% 85%;
+    --muted: 280 5% 15%;
+    --muted-foreground: 0 0% 60%;
+    --accent: 280 5% 20%;
+    --accent-foreground: 0 0% 95%;
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 280 5% 20%;
+    --input: 280 5% 18%;
+    --ring: 174 72% 56%;
+    --sidebar-background: 280 5% 10%;
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 174 72% 56%;
+    --sidebar-primary-foreground: 280 6% 7%;
+    --sidebar-accent: 280 5% 16%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 280 5% 18%;
+    --sidebar-ring: 174 72% 56%;
   }
 }
 
-.loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #3c4043;
-  border-top-color: #8ab4f8;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-/* Bounce Animation for Chat Loading */
-@keyframes bounce {
-
-  0%,
-  100% {
-    transform: translateY(0);
+@layer base {
+  * {
+    @apply border-border;
   }
 
-  50% {
-    transform: translateY(-4px);
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-weight: 500;
   }
 }
 
-.animate-bounce {
-  animation: bounce 0.6s ease-in-out infinite;
-}
-
-/* Line clamp utility */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* Smooth transitions for all interactive elements */
-button,
-a,
-input {
-  transition: all 0.15s ease;
-}
-
-/* Focus styles */
-button:focus-visible,
-input:focus-visible {
-  outline: 2px solid #8ab4f8;
-  outline-offset: 2px;
-}
-
-/* Selection color */
-::selection {
-  background: #8ab4f8;
-  color: #0f0f0f;
-}
-
-/* Gradient text utility */
-.gradient-text {
-  background: linear-gradient(135deg, #8ab4f8 0%, #ea8600 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Glassmorphism effect */
-.glass {
-  background: rgba(28, 28, 28, 0.8);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-/* Pulse animation for generating states */
-@keyframes pulse {
-
-  0%,
-  100% {
-    opacity: 1;
+@layer components {
+  .notebook-card {
+    @apply bg-card rounded-xl border border-border transition-all duration-200;
+  }
+  
+  .notebook-card:hover {
+    @apply bg-notebook-hover border-notebook-active;
   }
 
-  50% {
-    opacity: 0.5;
+  .notebook-btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all duration-200;
+  }
+
+  .notebook-btn-primary {
+    @apply notebook-btn bg-secondary text-secondary-foreground hover:bg-accent;
+  }
+
+  .notebook-btn-ghost {
+    @apply notebook-btn bg-transparent hover:bg-secondary text-foreground;
+  }
+
+  .notebook-input {
+    @apply bg-input border border-border rounded-full px-4 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring;
+  }
+
+  .notebook-panel {
+    @apply bg-card rounded-xl border border-border;
+  }
+
+  .studio-tool {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors hover:bg-accent cursor-pointer;
+  }
+
+  .source-item {
+    @apply flex items-center gap-3 px-3 py-2 rounded-lg transition-colors hover:bg-accent cursor-pointer;
+  }
+
+  .teal-link {
+    @apply text-primary hover:underline cursor-pointer;
   }
 }
 
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-/* Fade in animation */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
+@layer utilities {
+  .bg-notebook-surface {
+    background-color: hsl(var(--notebook-surface));
+  }
+  
+  .bg-notebook-hover {
+    background-color: hsl(var(--notebook-hover));
+  }
+  
+  .bg-notebook-active {
+    background-color: hsl(var(--notebook-active));
   }
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  .text-notebook-teal {
+    color: hsl(var(--notebook-teal));
   }
-}
 
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-out forwards;
-}
+  .text-notebook-pink {
+    color: hsl(var(--notebook-pink));
+  }
 
-/* Scale animation for buttons */
-.hover-scale:hover {
-  transform: scale(1.02);
-}
+  .border-notebook-active {
+    border-color: hsl(var(--notebook-active));
+  }
 
-.hover-scale:active {
-  transform: scale(0.98);
-}
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
 
-/* Checkbox custom styles */
-input[type="checkbox"] {
-  accent-color: #8ab4f8;
-}
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
 
-/* Prose styles for chat content */
-.prose-invert h1,
-.prose-invert h2,
-.prose-invert h3,
-.prose-invert h4 {
-  color: #e3e3e3;
-  font-weight: 400;
-}
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
 
-.prose-invert p {
-  color: #e3e3e3;
-}
-
-.prose-invert strong {
-  color: #ffffff;
-  font-weight: 500;
-}
-
-.prose-invert code {
-  background: #292929;
-  padding: 0.125rem 0.375rem;
-  border-radius: 0.25rem;
-  font-size: 0.875em;
-  color: #8ab4f8;
-}
-
-.prose-invert pre {
-  background: #1c1c1c;
-  border: 1px solid #2d2d2d;
-  border-radius: 0.5rem;
-  padding: 1rem;
-  overflow-x: auto;
-}
-
-.prose-invert a {
-  color: #8ab4f8;
-  text-decoration: none;
-}
-
-.prose-invert a:hover {
-  text-decoration: underline;
-}
-
-/* Truncate text */
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--border));
+    border-radius: 3px;
+  }
 }
