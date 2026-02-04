@@ -6,7 +6,7 @@ import type { Message, Citation } from "@/types/api";
 import { toast } from "@/components/ui/use-toast";
 
 interface ChatPanelProps {
-  notebookId: number;
+  notebookId: string;
 }
 
 const ChatPanel = ({ notebookId }: ChatPanelProps) => {

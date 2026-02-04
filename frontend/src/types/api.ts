@@ -1,6 +1,6 @@
 // API Types
 export interface Notebook {
-  id: number;
+  id: string; // UUID
   title: string;
   description?: string;
   created_at: string;
@@ -45,7 +45,7 @@ export interface Citation {
 
 export interface Conversation {
   id: number;
-  notebook: number;
+  notebook: string; // UUID reference to notebook
   title: string;
   created_at: string;
   updated_at: string;
@@ -54,7 +54,7 @@ export interface Conversation {
 
 export interface ChatSendRequest {
   conversation_id?: number;
-  notebook_id?: number;
+  notebook_id?: string; // UUID
   message: string;
   document_ids?: number[];
 }
