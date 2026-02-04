@@ -9,12 +9,18 @@ import { toast } from "@/components/ui/use-toast";
 interface SourcesPanelProps {
   notebookId: string;
   documents: Document[];
+  selectedDocuments: Set<number>;
+  onToggleDocument: (id: number) => void;
+  onToggleAll: () => void;
 }
 
-const SourcesPanel = ({ notebookId, documents }: SourcesPanelProps) => {
-  const [selectedDocuments, setSelectedDocuments] = useState<Set<number>>(
-    new Set(documents.map(d => d.id))
-  );
+const SourcesPanel = ({
+  notebookId,
+  documents,
+  selectedDocuments,
+  onToggleDocument,
+  onToggleAll
+}: SourcesPanelProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const queryClient = useQueryClient();
 
@@ -49,23 +55,11 @@ const SourcesPanel = ({ notebookId, documents }: SourcesPanelProps) => {
   };
 
   const toggleDocument = (docId: number) => {
-    setSelectedDocuments(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(docId)) {
-        newSet.delete(docId);
-      } else {
-        newSet.add(docId);
-      }
-      return newSet;
-    });
+    onToggleDocument(docId);
   };
 
   const toggleAll = () => {
-    if (selectedDocuments.size === documents.length) {
-      setSelectedDocuments(new Set());
-    } else {
-      setSelectedDocuments(new Set(documents.map(d => d.id)));
-    }
+    onToggleAll();
   };
 
   const getFileIcon = (fileType: string) => {

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Header from "@/components/Header";
@@ -23,6 +23,38 @@ const NotebookDetail = () => {
     },
     enabled: !!notebookId,
   });
+
+  // Source selection state
+  const [selectedDocuments, setSelectedDocuments] = useState<Set<number>>(new Set());
+
+  // Initialize selection when notebook loads
+  useEffect(() => {
+    if (notebook?.documents) {
+      setSelectedDocuments(new Set(notebook.documents.map(d => d.id)));
+    }
+  }, [notebook?.documents]);
+
+  const handleToggleDocument = (docId: number) => {
+    setSelectedDocuments(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(docId)) {
+        newSet.delete(docId);
+      } else {
+        newSet.add(docId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleToggleAll = () => {
+    if (!notebook?.documents) return;
+
+    if (selectedDocuments.size === notebook.documents.length) {
+      setSelectedDocuments(new Set());
+    } else {
+      setSelectedDocuments(new Set(notebook.documents.map(d => d.id)));
+    }
+  };
 
   if (isLoading) {
     return (
@@ -63,8 +95,17 @@ const NotebookDetail = () => {
       />
 
       <main className="flex-1 flex overflow-hidden p-2 gap-0">
-        <SourcesPanel notebookId={notebookId!} documents={notebook.documents || []} />
-        <ChatPanel notebookId={notebookId!} />
+        <SourcesPanel
+          notebookId={notebookId!}
+          documents={notebook.documents || []}
+          selectedDocuments={selectedDocuments}
+          onToggleDocument={handleToggleDocument}
+          onToggleAll={handleToggleAll}
+        />
+        <ChatPanel
+          notebookId={notebookId!}
+          selectedDocuments={selectedDocuments}
+        />
         <StudioPanel />
       </main>
     </div>
