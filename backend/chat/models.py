@@ -10,8 +10,10 @@ class Notebook(models.Model):
     """
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=255, default="Untitled notebook")
+    description = models.TextField(blank=True, default="")
     icon = models.CharField(max_length=10, default="📓")  # Emoji icon
     color = models.CharField(max_length=7, default="#4285f4")  # Hex color
+    is_public = models.BooleanField(default=False)
     
     # Related documents
     documents = models.ManyToManyField(Document, related_name='notebooks', blank=True)

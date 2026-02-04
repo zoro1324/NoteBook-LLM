@@ -40,7 +40,7 @@ class NotebookListSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Notebook
-        fields = ['id', 'title', 'icon', 'color', 'source_count', 'date', 
+        fields = ['id', 'title', 'description', 'icon', 'color', 'is_public', 'source_count', 'date', 
                   'created_at', 'updated_at']
     
     def get_date(self, obj):
@@ -55,7 +55,7 @@ class NotebookDetailSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Notebook
-        fields = ['id', 'title', 'icon', 'color', 'documents', 'conversations',
+        fields = ['id', 'title', 'description', 'icon', 'color', 'is_public', 'documents', 'conversations',
                   'source_count', 'created_at', 'updated_at']
     
     def get_documents(self, obj):

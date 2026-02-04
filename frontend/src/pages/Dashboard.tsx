@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronDown, Grid2X2, List, Check } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Header from "@/components/Header";
 import NotebookCard from "@/components/NotebookCard";
 import CreateNotebookCard from "@/components/CreateNotebookCard";
 import NotebookIcon from "@/components/NotebookIcon";
 import { notebooksApi } from "@/lib/api";
+import { toast } from "@/components/ui/use-toast";
 
 type ViewMode = "grid" | "list";
 type TabType = "all" | "my" | "featured";
@@ -15,6 +16,7 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>("my");
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const queryClient = useQueryClient();
 
   // Fetch notebooks from API
   const { data: notebooks = [], isLoading } = useQuery({
@@ -24,6 +26,33 @@ const Dashboard = () => {
       return response.data;
     },
   });
+
+  // Create notebook mutation
+  const createNotebookMutation = useMutation({
+    mutationFn: async () => {
+      const response = await notebooksApi.create({
+        title: "Untitled notebook",
+        description: "",
+        is_public: false,
+      });
+      return response.data;
+    },
+    onSuccess: (newNotebook) => {
+      queryClient.invalidateQueries({ queryKey: ['notebooks'] });
+      navigate(`/notebook/${newNotebook.id}`);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.response?.data?.error || "Failed to create notebook",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleCreateNotebook = () => {
+    createNotebookMutation.mutate();
+  };
 
   const tabs: { id: TabType; label: string }[] = [
     { id: "all", label: "All" },
@@ -82,9 +111,13 @@ const Dashboard = () => {
             </button>
 
             {/* Create Button */}
-            <button className="notebook-btn bg-secondary text-foreground hover:bg-accent border border-border">
+            <button
+              onClick={handleCreateNotebook}
+              disabled={createNotebookMutation.isPending}
+              className="notebook-btn bg-secondary text-foreground hover:bg-accent border border-border disabled:opacity-50"
+            >
               <span className="text-lg">+</span>
-              Create new
+              {createNotebookMutation.isPending ? "Creating..." : "Create new"}
             </button>
           </div>
         </div>
@@ -97,7 +130,7 @@ const Dashboard = () => {
           ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
           : "grid-cols-1"
           }`}>
-          <CreateNotebookCard onClick={() => navigate("/notebook/new")} />
+          <CreateNotebookCard onClick={handleCreateNotebook} />
 
           {isLoading ? (
             <div className="col-span-full text-center text-muted-foreground py-8">

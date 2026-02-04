@@ -11,8 +11,8 @@ const NotebookDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  // Fetch notebook data (only if not creating a new one)
-  const notebookId = id && id !== 'new' ? parseInt(id) : null;
+  // Fetch notebook data
+  const notebookId = id || null;
 
   const { data: notebook, isLoading } = useQuery({
     queryKey: ['notebook', notebookId],
@@ -23,28 +23,6 @@ const NotebookDetail = () => {
     },
     enabled: !!notebookId,
   });
-
-  // If creating a new notebook, handle it
-  if (id === 'new') {
-    // TODO: Show create notebook form
-    return (
-      <div className="min-h-screen h-screen bg-background flex flex-col">
-        <Header showBackToHome notebookTitle="New Notebook" />
-        <main className="flex-1 flex items-center justify-center">
-          <div className="text-center">
-            <h2 className="text-2xl font-medium mb-4">Create a new notebook</h2>
-            <p className="text-muted-foreground">This feature will be implemented soon</p>
-            <button
-              onClick={() => navigate('/')}
-              className="mt-4 notebook-btn-primary"
-            >
-              Back to home
-            </button>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   if (isLoading) {
     return (
