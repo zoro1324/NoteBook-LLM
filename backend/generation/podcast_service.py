@@ -18,7 +18,29 @@ class PodcastService:
             "guest": "en-US-JennyNeural" # Female voice
         }
         
-    def generate_podcast(self, text, output_dir="media/podcasts"):
+    def generate_podcast_options(self, text):
+        """
+        Generate 3 distinct podcast theme/style options based on the content.
+        """
+        prompt = f"""
+        Analyze the following content and propose 3 distinct, creative angles or themes for a podcast conversation about it.
+        For example: "Deep Dive into Financials", "Debate on Ethics", "Beginner's Guide".
+        
+        Content Summary:
+        {text[:10000]}... (truncated)
+
+        Return ONLY a JSON object with a key 'options' which is a list of strings.
+        Example: {{"options": ["Theme 1", "Theme 2", "Theme 3"]}}
+        """
+        try:
+            response = ollama.chat(model=self.model, messages=[{'role': 'user', 'content': prompt}], format='json')
+            data = json.loads(response['message']['content'])
+            return data.get('options', [])
+        except Exception as e:
+            print(f"[PodcastService] Error generating options: {e}")
+            return ["Deep Dive", "Summary", "Key Takeaways"]
+
+    def generate_podcast(self, text, instruction=None, output_dir="media/podcasts"):
         """
         Main method to generate a podcast from text.
         Returns the path to the generated audio file.
@@ -31,7 +53,7 @@ class PodcastService:
         print(f"[PodcastService] Selected Roles: {roles}")
         
         # 2. Generate Script
-        script = self._generate_script(text, roles)
+        script = self._generate_script(text, roles, instruction)
         print(f"[PodcastService] Generated Script with {len(script)} turns")
         
         # 3. Generate Audio
@@ -63,12 +85,16 @@ class PodcastService:
             print(f"[PodcastService] Error selecting roles: {e}")
             return {"host": "Host", "guest": "Guest"}
 
-    def _generate_script(self, text, roles):
+    def _generate_script(self, text, roles, instruction=None):
         """Generate the podcast script"""
+        
+        instruction_text = f"Focus on this specific theme/instruction: {instruction}" if instruction else "Cover the key points in detail."
+        
         podcast_prompt = f"""
         Generate a podcast conversation between a {roles.get('host', 'Host')} and a {roles.get('guest', 'Guest')} based on the following content.
         Make it engaging and easy to understand.
-        Make it a comprehensive deep dive. Do not limit the conversation length. Cover the key points in detail.
+        Make it a comprehensive deep dive. Do not limit the conversation length. 
+        {instruction_text}
 
         Content:
         {text[:30000]}... (truncated if too long)

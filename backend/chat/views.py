@@ -5,12 +5,16 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.http import StreamingHttpResponse
 import json
 
+
 from .models import Notebook, Conversation, Message, Citation
 from .serializers import (
     NotebookListSerializer, NotebookDetailSerializer,
     ConversationSerializer, MessageSerializer
 )
 from documents.models import Document, DocumentChunk
+from generation.podcast_service import podcast_service
+import os
+from django.conf import settings
 
 
 class NotebookViewSet(viewsets.ModelViewSet):
@@ -49,6 +53,74 @@ class NotebookViewSet(viewsets.ModelViewSet):
         except Document.DoesNotExist:
             return Response({'error': 'Document not found'}, 
                           status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['post'])
+    def podcast_options(self, request, pk=None):
+        """Generate podcast theme options based on all notebook documents"""
+        notebook = self.get_object()
+        
+        # Aggregate text from all documents
+        all_text = ""
+        for doc in notebook.documents.all():
+            if doc.extracted_text:
+                all_text += f"\n\n--- Document: {doc.title} ---\n{doc.extracted_text}"
+        
+        if not all_text.strip():
+             return Response(
+                {'error': 'No text content found in notebook documents.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            options = podcast_service.generate_podcast_options(all_text)
+            return Response({'options': options})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def generate_podcast(self, request, pk=None):
+        """Generate podcast audio for the notebook with specific instruction"""
+        notebook = self.get_object()
+        instruction = request.data.get('instruction')
+        
+        # Aggregate text
+        all_text = ""
+        for doc in notebook.documents.all():
+            if doc.extracted_text:
+                all_text += f"\n\n--- Document: {doc.title} ---\n{doc.extracted_text}"
+        
+        if not all_text.strip():
+             return Response(
+                {'error': 'No text content found in notebook documents.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        try:
+            # Output directory
+            output_dir = os.path.join(settings.MEDIA_ROOT, 'podcasts')
+            
+            # Generate
+            filename = podcast_service.generate_podcast(all_text, instruction=instruction, output_dir=output_dir)
+            
+            if not filename:
+                return Response(
+                    {'error': 'Failed to generate podcast audio'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+            # Construct URL
+            audio_url = request.build_absolute_uri(settings.MEDIA_URL + 'podcasts/' + filename)
+            
+            return Response({
+                'status': 'success',
+                'audio_url': audio_url
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class ConversationViewSet(viewsets.ModelViewSet):
