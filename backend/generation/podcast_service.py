@@ -14,42 +14,81 @@ class PodcastService:
     def __init__(self):
         self.model = "phi3:mini"
         self.voice_map = {
-            "host": "en-US-GuyNeural",   # Male voice
-            "guest": "en-US-JennyNeural" # Female voice
+            "person1": "en-US-GuyNeural",   # Male voice
+            "person2": "en-US-JennyNeural" # Female voice
         }
         
-    def generate_podcast_options(self, text):
+    def generate_persona_options(self, text):
         """
-        Generate 3 distinct podcast theme/style options based on the content.
+        Analyze content and propose 3 distinct persona pairs.
         """
         prompt = f"""
-        Analyze the following content and propose 3 distinct, creative angles or themes for a podcast conversation about it.
-        For example: "Deep Dive into Financials", "Debate on Ethics", "Beginner's Guide".
+        Analyze the following content and propose 3 distinct pairs of personas (Host 1 and Host 2) for an audio conversation about it.
+        Each pair should represent a different dynamic or angle (e.g., Skeptic vs Believer, Expert vs Novice, Enthusiast vs Realist).
         
         Content Summary:
         {text[:10000]}... (truncated)
 
-        Return ONLY a JSON object with a key 'options' which is a list of strings.
-        Example: {{"options": ["Theme 1", "Theme 2", "Theme 3"]}}
+        Return ONLY a JSON object with a key 'options' which is a list of objects.
+        Each object must have 'person1' (name/role) and 'person2' (name/role).
+        Example: 
+        {{
+            "options": [
+                {{"person1": "Professor X (Expert)", "person2": "Student Y (Curious)"}},
+                {{"person1": "Tech Optimist", "person2": "Tech Skeptic"}},
+                {{"person1": "Historian", "person2": "Futurist"}}
+            ]
+        }}
         """
         try:
             response = ollama.chat(model=self.model, messages=[{'role': 'user', 'content': prompt}], format='json')
             data = json.loads(response['message']['content'])
             return data.get('options', [])
         except Exception as e:
-            print(f"[PodcastService] Error generating options: {e}")
-            return ["Deep Dive", "Summary", "Key Takeaways"]
+            print(f"[PodcastService] Error generating persona options: {e}")
+            return [
+                {"person1": "Expert", "person2": "Novice"},
+                {"person1": "Skeptic", "person2": "Enthusiast"},
+                {"person1": "Host 1", "person2": "Host 2"}
+            ]
 
-    def generate_podcast(self, text, instruction=None, output_dir="media/podcasts"):
+    def generate_scenario_options(self, text, personas=None):
         """
-        Main method to generate a podcast from text.
+        Generate 3 distinct conversational scenarios based on content and selected personas.
+        """
+        persona_context = ""
+        if personas:
+            persona_context = f"The conversation will be between {personas.get('person1')} and {personas.get('person2')}."
+
+        prompt = f"""
+        Analyze the following content and propose 3 distinct, creative conversational scenarios for an audio overview.
+        {persona_context}
+        Consider the perspectives of the specific personas defined above.
+        
+        Content Summary:
+        {text[:10000]}... (truncated)
+
+        Return ONLY a JSON object with a key 'options' which is a list of strings.
+        Example: {{"options": ["Debate on ethics", "Deep dive into history", "Practical application discussion"]}}
+        """
+        try:
+            response = ollama.chat(model=self.model, messages=[{'role': 'user', 'content': prompt}], format='json')
+            data = json.loads(response['message']['content'])
+            return data.get('options', [])
+        except Exception as e:
+            print(f"[PodcastService] Error generating scenario options: {e}")
+            return ["Deep Dive", "Critical Analysis", "Casual Overview"]
+
+    def generate_podcast(self, text, instruction=None, person1=None, person2=None, output_dir="media/podcasts"):
+        """
+        Main method to generate an audio overview from text.
         Returns the path to the generated audio file.
         """
         # Ensure output directory exists
         os.makedirs(output_dir, exist_ok=True)
         
         # 1. Determine Roles
-        roles = self._determine_roles(text)
+        roles = self._determine_roles(text, instruction, person1, person2)
         print(f"[PodcastService] Selected Roles: {roles}")
         
         # 2. Generate Script
@@ -61,38 +100,54 @@ class PodcastService:
         
         return audio_file
 
-    def _determine_roles(self, text):
+    def _determine_roles(self, text, instruction=None, person1=None, person2=None):
         """Determine suitable roles for the conversation"""
+        
+        # If roles are explicitly provided, use them
+        if person1 and person2:
+            return {"person1": person1, "person2": person2}
+
+        instruction_context = f"User Instruction/Theme: {instruction}" if instruction else ""
+        
         role_prompt = f"""
         Analyze the following content and determine the two most suitable roles for a conversation about it.
-        For example: 
-        - If the content is about study, roles could be 'Teacher' and 'Student'.
-        - If the content is about a job, roles could be 'HR' and 'Candidate'.
-        - If the content is technical, roles could be 'Expert' and 'Novice'.
+        {instruction_context}
+        
+        If the instruction suggests specific personas (e.g. "Student and Teacher"), USE THEM.
+        Otherwise, infer the best roles from the content.
+        
+        Examples:
+        - Instruction: "Casual chat" -> Person 1: "Sarah", Person 2: "Naveen"
+        - Instruction: "Academic explanation" -> Person 1: "Professor", Person 2: "Student"
+        - Content is Technical -> Person 1: "Expert", Person 2: "Novice"
 
         Content:
         {text[:10000]}... (truncated)
 
-        Return ONLY a JSON object with keys 'host' and 'guest'. Do not add any other text.
-        Example format: {{"host": "...", "guest": "..."}}
+        Return ONLY a JSON object with keys 'person1' (the lead speaker) and 'person2' (the second speaker). 
+        Do not add any other text.
+        Example format: {{"person1": "...", "person2": "..."}}
         """
         
         try:
             response = ollama.chat(model=self.model, messages=[{'role': 'user', 'content': role_prompt}], format='json')
             roles = json.loads(response['message']['content'])
+            # Ensure keys exist
+            if 'person1' not in roles: roles['person1'] = roles.get('host', 'Speaker 1')
+            if 'person2' not in roles: roles['person2'] = roles.get('guest', 'Speaker 2')
             return roles
         except Exception as e:
             print(f"[PodcastService] Error selecting roles: {e}")
-            return {"host": "Host", "guest": "Guest"}
+            return {"person1": "Speaker 1", "person2": "Speaker 2"}
 
     def _generate_script(self, text, roles, instruction=None):
         """Generate the podcast script"""
         
-        instruction_text = f"Focus on this specific theme/instruction: {instruction}" if instruction else "Cover the key points in detail."
+        instruction_text = f"Focus on this specific theme/format: {instruction}" if instruction else "Cover the key points naturally."
         
         podcast_prompt = f"""
-        Generate a podcast conversation between a {roles.get('host', 'Host')} and a {roles.get('guest', 'Guest')} based on the following content.
-        Make it engaging and easy to understand.
+        Generate a natural conversation between {roles.get('person1', 'Speaker 1')} and {roles.get('person2', 'Speaker 2')} based on the following content.
+        Make it engaging, authentic, and easy to follow.
         Make it a comprehensive deep dive. Do not limit the conversation length. 
         {instruction_text}
 
@@ -101,12 +156,12 @@ class PodcastService:
 
         Return the output as a JSON object with a key 'conversation' which is a list of objects.
         Each object in the list should have 'speaker' and 'text' keys.
-        Ensure the 'speaker' field matches exactly one of the roles: {roles.get('host', 'Host')} or {roles.get('guest', 'Guest')}.
+        Ensure the 'speaker' field matches exactly one of the roles: "{roles.get('person1', 'Speaker 1')}" or "{roles.get('person2', 'Speaker 2')}".
         Example format:
         {{
           "conversation": [
-            {{"speaker": "{roles.get('host', 'Host')}", "text": "Hello everyone..."}},
-            {{"speaker": "{roles.get('guest', 'Guest')}", "text": "Hi! Today we are discussing..."}}
+            {{"speaker": "{roles.get('person1', 'Speaker 1')}", "text": "Hello..."}},
+            {{"speaker": "{roles.get('person2', 'Speaker 2')}", "text": "Hi there..."}}
           ]
         }}
         """
@@ -143,7 +198,7 @@ class PodcastService:
 
         async def _process_script():
             segments = []
-            host_role = roles.get('host', 'Host')
+            person1_role = roles.get('person1', 'Speaker 1')
             
             for i, turn in enumerate(script):
                 speaker = turn.get('speaker', '')
@@ -153,13 +208,11 @@ class PodcastService:
                     continue
                 
                 # Determine voice
-                # Simple heuristic: if speaker string contains the host role name, use host voice
-                # Otherwise use guest voice. 
-                # Ideally, we should map exact role strings, but LLM might vary them slightly.
-                if host_role in speaker or speaker in host_role:
-                    voice = self.voice_map['host']
+                # Use simple heuristics to match speaker name to role
+                if speaker == person1_role or person1_role in speaker:
+                    voice = self.voice_map['person1']
                 else:
-                    voice = self.voice_map['guest']
+                    voice = self.voice_map['person2']
                 
                 filename = os.path.join(output_dir, f"segment_{i}_{uuid.uuid4().hex[:8]}.mp3")
                 await _generate_segment(text, voice, filename)
