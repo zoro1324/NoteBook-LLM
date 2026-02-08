@@ -47,17 +47,24 @@ class NotebookListSerializer(serializers.ModelSerializer):
         return obj.updated_at.strftime('%d %b %Y')
 
 
+
 class NotebookDetailSerializer(serializers.ModelSerializer):
     """Full serializer for notebook page"""
     documents = serializers.SerializerMethodField()
     conversations = ConversationSerializer(many=True, read_only=True)
     source_count = serializers.ReadOnlyField()
+    guides = serializers.SerializerMethodField()
     
     class Meta:
         model = Notebook
         fields = ['id', 'title', 'description', 'icon', 'color', 'is_public', 'documents', 'conversations',
-                  'source_count', 'created_at', 'updated_at']
+                  'source_count', 'created_at', 'updated_at', 'guides']
+    
     
     def get_documents(self, obj):
         from documents.serializers import DocumentSerializer
         return DocumentSerializer(obj.documents.all(), many=True).data
+
+    def get_guides(self, obj):
+        from documents.serializers import NotebookGuideSerializer
+        return NotebookGuideSerializer(obj.guides.all(), many=True).data

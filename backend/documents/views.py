@@ -8,7 +8,12 @@ from .serializers import (
     DocumentSerializer, DocumentUploadSerializer, 
     DocumentChunkSerializer, NotebookGuideSerializer
 )
+
 from .services import get_processor
+from generation.podcast_service import podcast_service
+import os
+from django.conf import settings
+
 
 
 class DocumentViewSet(viewsets.ModelViewSet):
@@ -240,6 +245,44 @@ class DocumentViewSet(viewsets.ModelViewSet):
             'processed': len(results),
             'results': results
         })
+
+    @action(detail=True, methods=['post'])
+    def generate_podcast(self, request, pk=None):
+        """Generate an audio podcast overview for the document"""
+        document = self.get_object()
+        
+        if not document.extracted_text:
+            return Response(
+                {'error': 'No extracted text found. Please process document first.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        try:
+            # Output directory
+            output_dir = os.path.join(settings.MEDIA_ROOT, 'podcasts')
+            
+            # Generate
+            filename = podcast_service.generate_podcast(document.extracted_text, output_dir=output_dir)
+            
+            if not filename:
+                return Response(
+                    {'error': 'Failed to generate podcast audio'},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+                
+            # Construct URL
+            audio_url = request.build_absolute_uri(settings.MEDIA_URL + 'podcasts/' + filename)
+            
+            return Response({
+                'status': 'success',
+                'audio_url': audio_url
+            })
+            
+        except Exception as e:
+            return Response(
+                {'error': str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class NotebookGuideViewSet(viewsets.ModelViewSet):
