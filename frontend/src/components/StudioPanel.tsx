@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Mic, Video, GitBranch, FileText, BookOpen, HelpCircle, BarChart3, Presentation, Table, Plus, MoreVertical, Loader2, Play, Pause, X, Check, ArrowRight, RefreshCw } from "lucide-react";
+import { Mic, Video, GitBranch, FileText, BookOpen, HelpCircle, BarChart3, Presentation, Table, Plus, MoreVertical, Loader2, Play, Pause, X, Check, ArrowRight, RefreshCw, User, ChevronRight } from "lucide-react";
 import { notebooksApi } from "@/lib/api";
 import type { Document, NotebookGuide } from "@/types/api";
 
@@ -9,13 +9,38 @@ interface StudioPanelProps {
   guides: NotebookGuide[];
 }
 
-type PodcastView = 'idle' | 'loading_options' | 'selecting' | 'generating' | 'playing' | 'error';
+type PodcastView =
+  | 'idle'
+  | 'loading_personas'
+  | 'selecting_personas'
+  | 'loading_scenarios'
+  | 'selecting_scenario'
+  | 'generating'
+  | 'playing'
+  | 'error';
+
+interface PersonaOption {
+  person1: string;
+  person2: string;
+}
 
 const StudioPanel = ({ notebookId, documents = [], guides = [] }: StudioPanelProps) => {
   const [view, setView] = useState<PodcastView>('idle');
-  const [options, setOptions] = useState<string[]>([]);
-  const [customInput, setCustomInput] = useState("");
-  const [selectedOption, setSelectedOption] = useState<number | null>(null); // -1 for custom
+
+  // Data State
+  const [personaOptions, setPersonaOptions] = useState<PersonaOption[]>([]);
+  const [scenarioOptions, setScenarioOptions] = useState<string[]>([]);
+
+  // Selection State
+  const [selectedPersonaIdx, setSelectedPersonaIdx] = useState<number | null>(null); // -1 for custom
+  const [selectedScenarioIdx, setSelectedScenarioIdx] = useState<number | null>(null); // -1 for custom
+
+  // Custom Inputs
+  const [customPerson1, setCustomPerson1] = useState("");
+  const [customPerson2, setCustomPerson2] = useState("");
+  const [customScenario, setCustomScenario] = useState("");
+
+  // Result State
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -37,39 +62,85 @@ const StudioPanel = ({ notebookId, documents = [], guides = [] }: StudioPanelPro
     }
   }, [audioUrl]);
 
-  const fetchOptions = async () => {
+  // --- Step 1: Fetch Personas ---
+  const fetchPersonas = async () => {
     if (documents.length === 0) {
       alert("Please upload documents first.");
       return;
     }
-    setView('loading_options');
+    setView('loading_personas');
     setError(null);
     try {
-      const response = await notebooksApi.getPodcastOptions(notebookId);
-      setOptions(response.data.options);
-      setView('selecting');
+      const response = await notebooksApi.getPersonaOptions(notebookId);
+      setPersonaOptions(response.data.options);
+      setView('selecting_personas');
     } catch (err) {
       console.error(err);
-      setError("Failed to generate options.");
+      setError("Failed to generate persona options.");
       setView('error');
     }
   };
 
-  const generatePodcast = async (instruction: string) => {
+  // --- Step 2: Confirm Personas & Fetch Scenarios ---
+  const confirmPersonas = async () => {
+    if (selectedPersonaIdx === null) return;
+
+    let p1 = "";
+    let p2 = "";
+
+    if (selectedPersonaIdx === -1) {
+      if (!customPerson1.trim() || !customPerson2.trim()) return;
+      p1 = customPerson1;
+      p2 = customPerson2;
+    } else {
+      p1 = personaOptions[selectedPersonaIdx].person1;
+      p2 = personaOptions[selectedPersonaIdx].person2;
+    }
+
+    // Move to next step
+    setView('loading_scenarios');
+    try {
+      const response = await notebooksApi.getScenarioOptions(notebookId, p1, p2);
+      setScenarioOptions(response.data.options);
+      setView('selecting_scenario');
+    } catch (err) {
+      console.error(err);
+      setError("Failed to generate scenarios.");
+      setView('error');
+    }
+  };
+
+  // --- Step 3: Confirm Scenario & Generate ---
+  const generatePodcast = async () => {
+    if (selectedScenarioIdx === null) return;
+    if (selectedPersonaIdx === null) return; // Should not happen
+
+    let instruction = "";
+    if (selectedScenarioIdx === -1) {
+      if (!customScenario.trim()) return;
+      instruction = customScenario;
+    } else {
+      instruction = scenarioOptions[selectedScenarioIdx];
+    }
+
+    // Retrieve personas again
+    let p1 = "";
+    let p2 = "";
+    if (selectedPersonaIdx === -1) {
+      p1 = customPerson1;
+      p2 = customPerson2;
+    } else {
+      p1 = personaOptions[selectedPersonaIdx].person1;
+      p2 = personaOptions[selectedPersonaIdx].person2;
+    }
+
     setView('generating');
     setError(null);
     try {
-      const response = await notebooksApi.generatePodcast(notebookId, instruction);
+      const response = await notebooksApi.generatePodcast(notebookId, instruction, p1, p2);
       if (response.data.audio_url) {
         setAudioUrl(response.data.audio_url);
         // Autoplay handled by useEffect
-
-        // Optionally refresh parent or wait for user to reload?
-        // Ideally we should trigger a refetch of the notebook to get the new guide
-        // but for now, the user can just click the new guide after reload.
-        // Or we can assume the parent re-renders. 
-        // Actually, without a refetch, the guide won't appear in the list immediately.
-        // We can add a simple window.location.reload() or callback if needed, but let's stick to simple flow.
       } else {
         throw new Error("No audio URL returned");
       }
@@ -80,22 +151,12 @@ const StudioPanel = ({ notebookId, documents = [], guides = [] }: StudioPanelPro
     }
   };
 
-  const handleOptionSelect = (index: number) => {
-    setSelectedOption(index);
+  const handlePersonaSelect = (index: number) => {
+    setSelectedPersonaIdx(index);
   };
 
-  const confirmSelection = () => {
-    if (selectedOption === null) return;
-
-    let instruction = "";
-    if (selectedOption === -1) {
-      if (!customInput.trim()) return;
-      instruction = customInput;
-    } else {
-      instruction = options[selectedOption];
-    }
-
-    generatePodcast(instruction);
+  const handleScenarioSelect = (index: number) => {
+    setSelectedScenarioIdx(index);
   };
 
   const togglePlay = () => {
@@ -111,15 +172,19 @@ const StudioPanel = ({ notebookId, documents = [], guides = [] }: StudioPanelPro
 
   const resetView = () => {
     setAudioUrl(null);
-    setOptions([]);
-    setSelectedOption(null);
-    setCustomInput("");
+    setPersonaOptions([]);
+    setScenarioOptions([]);
+    setSelectedPersonaIdx(null);
+    setSelectedScenarioIdx(null);
+    setCustomPerson1("");
+    setCustomPerson2("");
+    setCustomScenario("");
     setView('idle');
     setError(null);
   };
 
   const tools = [
-    { icon: <Mic className="w-5 h-5" />, label: "Audio Overview", hasEdit: true, action: fetchOptions },
+    { icon: <Mic className="w-5 h-5" />, label: "Audio Overview", hasEdit: true, action: fetchPersonas },
     { icon: <Video className="w-5 h-5" />, label: "Video Overview", hasEdit: false },
     { icon: <GitBranch className="w-5 h-5" />, label: "Mind Map", hasEdit: false },
     { icon: <FileText className="w-5 h-5" />, label: "Reports", hasEdit: false },
@@ -152,24 +217,103 @@ const StudioPanel = ({ notebookId, documents = [], guides = [] }: StudioPanelPro
               </button>
             </div>
 
-            {/* Content based on State */}
-            {view === 'loading_options' && (
+            {/* View State Rendering */}
+
+            {/* 1. Loading Personas */}
+            {view === 'loading_personas' && (
               <div className="flex flex-col items-center py-4 gap-2 text-muted-foreground">
                 <Loader2 className="w-6 h-6 animate-spin text-notebook-teal" />
-                <span className="text-xs">Generating themes...</span>
+                <span className="text-xs">Analyzing content for personas...</span>
               </div>
             )}
 
-            {view === 'selecting' && (
-              <div className="space-y-2">
-                <p className="text-xs text-muted-foreground mb-2">Select a focus for your deep dive:</p>
-                {options.map((opt, idx) => (
+            {/* 2. Selecting Personas */}
+            {view === 'selecting_personas' && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <p className="text-xs text-muted-foreground mb-2">Step 1: Choose your hosts</p>
+
+                {personaOptions.map((opt, idx) => (
                   <button
                     key={idx}
-                    onClick={() => handleOptionSelect(idx)}
-                    className={`w-full text-left p-2 rounded text-sm border transition-all ${selectedOption === idx
-                        ? 'bg-notebook-teal/10 border-notebook-teal text-notebook-teal'
-                        : 'bg-background border-border hover:border-notebook-teal/50'
+                    onClick={() => handlePersonaSelect(idx)}
+                    className={`w-full text-left p-2 rounded text-sm border transition-all ${selectedPersonaIdx === idx
+                      ? 'bg-notebook-teal/10 border-notebook-teal text-notebook-teal'
+                      : 'bg-background border-border hover:border-notebook-teal/50'
+                      }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <User className="w-3 h-3" />
+                      <span className="font-medium text-xs">{opt.person1}</span>
+                      <span className="text-muted-foreground text-[10px]">&</span>
+                      <span className="font-medium text-xs">{opt.person2}</span>
+                    </div>
+                  </button>
+                ))}
+
+                {/* Custom Option */}
+                <div className={`p-2 rounded border transition-all ${selectedPersonaIdx === -1
+                  ? 'bg-notebook-teal/10 border-notebook-teal'
+                  : 'bg-background border-border'
+                  }`}>
+                  <button
+                    onClick={() => handlePersonaSelect(-1)}
+                    className={`text-sm font-medium w-full text-left mb-2 ${selectedPersonaIdx === -1 ? 'text-notebook-teal' : 'text-foreground'}`}
+                  >
+                    Custom Hosts
+                  </button>
+                  {selectedPersonaIdx === -1 && (
+                    <div className="space-y-2">
+                      <input
+                        type="text"
+                        value={customPerson1}
+                        onChange={(e) => setCustomPerson1(e.target.value)}
+                        placeholder="Host 1 (e.g. Skeptic)"
+                        className="w-full bg-background border border-border rounded p-1.5 text-xs focus:ring-1 focus:ring-notebook-teal outline-none"
+                      />
+                      <input
+                        type="text"
+                        value={customPerson2}
+                        onChange={(e) => setCustomPerson2(e.target.value)}
+                        placeholder="Host 2 (e.g. Fan)"
+                        className="w-full bg-background border border-border rounded p-1.5 text-xs focus:ring-1 focus:ring-notebook-teal outline-none"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={confirmPersonas}
+                  disabled={selectedPersonaIdx === null || (selectedPersonaIdx === -1 && (!customPerson1.trim() || !customPerson2.trim()))}
+                  className="w-full mt-2 bg-notebook-teal text-white py-1.5 rounded text-sm font-medium disabled:opacity-50 hover:bg-notebook-teal/90 transition-colors flex items-center justify-center gap-2"
+                >
+                  Next <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+
+            {/* 3. Loading Scenarios */}
+            {view === 'loading_scenarios' && (
+              <div className="flex flex-col items-center py-4 gap-2 text-muted-foreground">
+                <Loader2 className="w-6 h-6 animate-spin text-notebook-teal" />
+                <span className="text-xs">Generating scenarios...</span>
+              </div>
+            )}
+
+            {/* 4. Selecting Scenario */}
+            {view === 'selecting_scenario' && (
+              <div className="space-y-2 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-xs text-muted-foreground">Step 2: Choose a scenario</p>
+                  <button onClick={() => setView('selecting_personas')} className="text-[10px] text-notebook-teal hover:underline">Back</button>
+                </div>
+
+                {scenarioOptions.map((opt, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleScenarioSelect(idx)}
+                    className={`w-full text-left p-2 rounded text-sm border transition-all ${selectedScenarioIdx === idx
+                      ? 'bg-notebook-teal/10 border-notebook-teal text-notebook-teal'
+                      : 'bg-background border-border hover:border-notebook-teal/50'
                       }`}
                   >
                     {opt}
@@ -177,21 +321,21 @@ const StudioPanel = ({ notebookId, documents = [], guides = [] }: StudioPanelPro
                 ))}
 
                 {/* Custom Option */}
-                <div className={`p-2 rounded border transition-all ${selectedOption === -1
-                    ? 'bg-notebook-teal/10 border-notebook-teal'
-                    : 'bg-background border-border'
+                <div className={`p-2 rounded border transition-all ${selectedScenarioIdx === -1
+                  ? 'bg-notebook-teal/10 border-notebook-teal'
+                  : 'bg-background border-border'
                   }`}>
                   <button
-                    onClick={() => handleOptionSelect(-1)}
-                    className={`text-sm font-medium w-full text-left ${selectedOption === -1 ? 'text-notebook-teal' : 'text-foreground'}`}
+                    onClick={() => handleScenarioSelect(-1)}
+                    className={`text-sm font-medium w-full text-left ${selectedScenarioIdx === -1 ? 'text-notebook-teal' : 'text-foreground'}`}
                   >
                     Custom Instruction
                   </button>
-                  {selectedOption === -1 && (
+                  {selectedScenarioIdx === -1 && (
                     <input
                       type="text"
-                      value={customInput}
-                      onChange={(e) => setCustomInput(e.target.value)}
+                      value={customScenario}
+                      onChange={(e) => setCustomScenario(e.target.value)}
                       placeholder="e.g. Focus on technical details..."
                       className="w-full mt-2 bg-background border border-border rounded p-1.5 text-xs focus:ring-1 focus:ring-notebook-teal outline-none"
                     />
@@ -199,8 +343,8 @@ const StudioPanel = ({ notebookId, documents = [], guides = [] }: StudioPanelPro
                 </div>
 
                 <button
-                  onClick={confirmSelection}
-                  disabled={selectedOption === null || (selectedOption === -1 && !customInput.trim())}
+                  onClick={generatePodcast}
+                  disabled={selectedScenarioIdx === null || (selectedScenarioIdx === -1 && !customScenario.trim())}
                   className="w-full mt-2 bg-notebook-teal text-white py-1.5 rounded text-sm font-medium disabled:opacity-50 hover:bg-notebook-teal/90 transition-colors flex items-center justify-center gap-2"
                 >
                   Generate <ArrowRight className="w-4 h-4" />
@@ -208,6 +352,7 @@ const StudioPanel = ({ notebookId, documents = [], guides = [] }: StudioPanelPro
               </div>
             )}
 
+            {/* 5. Generating */}
             {view === 'generating' && (
               <div className="flex flex-col items-center py-4 gap-2 text-muted-foreground">
                 <Loader2 className="w-6 h-6 animate-spin text-notebook-teal" />
@@ -216,6 +361,7 @@ const StudioPanel = ({ notebookId, documents = [], guides = [] }: StudioPanelPro
               </div>
             )}
 
+            {/* 6. Playing */}
             {view === 'playing' && (
               <div className="flex flex-col items-center gap-3">
                 <div className="w-full bg-notebook-teal/10 h-12 rounded flex items-center justify-center animate-pulse">
@@ -238,6 +384,7 @@ const StudioPanel = ({ notebookId, documents = [], guides = [] }: StudioPanelPro
               </div>
             )}
 
+            {/* Error */}
             {view === 'error' && (
               <div className="flex flex-col items-center py-2 gap-2">
                 <span className="text-xs text-red-500 text-center">{error}</span>

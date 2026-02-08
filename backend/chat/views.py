@@ -61,11 +61,11 @@ class NotebookViewSet(viewsets.ModelViewSet):
                           status=status.HTTP_404_NOT_FOUND)
 
     @action(detail=True, methods=['post'])
-    def podcast_options(self, request, pk=None):
-        """Generate podcast theme options based on all notebook documents"""
+    def get_persona_options(self, request, pk=None):
+        """Generate persona options based on notebook documents"""
         notebook = self.get_object()
         
-        # Aggregate text from all documents
+        # Aggregate text
         all_text = ""
         for doc in notebook.documents.all():
             if doc.extracted_text:
@@ -78,16 +78,44 @@ class NotebookViewSet(viewsets.ModelViewSet):
             )
 
         try:
-            options = podcast_service.generate_podcast_options(all_text)
+            options = podcast_service.generate_persona_options(all_text)
+            return Response({'options': options})
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['post'])
+    def get_scenario_options(self, request, pk=None):
+        """Generate podcast theme/scenario options based on notebook documents and selected personas"""
+        notebook = self.get_object()
+        person1 = request.data.get('person1')
+        person2 = request.data.get('person2')
+        personas = {'person1': person1, 'person2': person2} if person1 and person2 else None
+        
+        # Aggregate text
+        all_text = ""
+        for doc in notebook.documents.all():
+            if doc.extracted_text:
+                all_text += f"\n\n--- Document: {doc.title} ---\n{doc.extracted_text}"
+        
+        if not all_text.strip():
+             return Response(
+                {'error': 'No text content found in notebook documents.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            options = podcast_service.generate_scenario_options(all_text, personas=personas)
             return Response({'options': options})
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     @action(detail=True, methods=['post'])
     def generate_podcast(self, request, pk=None):
-        """Generate podcast audio for the notebook with specific instruction"""
+        """Generate podcast audio for the notebook with specific instruction and personas"""
         notebook = self.get_object()
         instruction = request.data.get('instruction')
+        person1 = request.data.get('person1')
+        person2 = request.data.get('person2')
         
         # Aggregate text
         all_text = ""
@@ -106,7 +134,13 @@ class NotebookViewSet(viewsets.ModelViewSet):
             output_dir = os.path.join(settings.MEDIA_ROOT, 'podcasts')
             
             # Generate
-            filename = podcast_service.generate_podcast(all_text, instruction=instruction, output_dir=output_dir)
+            filename = podcast_service.generate_podcast(
+                all_text, 
+                instruction=instruction, 
+                person1=person1,
+                person2=person2,
+                output_dir=output_dir
+            )
             
             if not filename:
                 return Response(
@@ -118,7 +152,10 @@ class NotebookViewSet(viewsets.ModelViewSet):
             audio_url = request.build_absolute_uri(settings.MEDIA_URL + 'podcasts/' + filename)
             
             # Save as NotebookGuide
-            guide_title = f"Audio Overview - {instruction}" if instruction else "Audio Overview"
+            guide_title = f"Audio Overview"
+            if person1 and person2:
+                guide_title += f" ({person1} & {person2})"
+            
             if len(guide_title) > 255:
                 guide_title = guide_title[:252] + "..."
                 
