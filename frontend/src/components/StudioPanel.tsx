@@ -1,16 +1,17 @@
 import { useState, useRef, useEffect } from "react";
 import { Mic, Video, GitBranch, FileText, BookOpen, HelpCircle, BarChart3, Presentation, Table, Plus, MoreVertical, Loader2, Play, Pause, X, Check, ArrowRight, RefreshCw } from "lucide-react";
 import { notebooksApi } from "@/lib/api";
-import type { Document } from "@/types/api";
+import type { Document, NotebookGuide } from "@/types/api";
 
 interface StudioPanelProps {
   notebookId: string;
   documents: Document[];
+  guides: NotebookGuide[];
 }
 
 type PodcastView = 'idle' | 'loading_options' | 'selecting' | 'generating' | 'playing' | 'error';
 
-const StudioPanel = ({ notebookId, documents = [] }: StudioPanelProps) => {
+const StudioPanel = ({ notebookId, documents = [], guides = [] }: StudioPanelProps) => {
   const [view, setView] = useState<PodcastView>('idle');
   const [options, setOptions] = useState<string[]>([]);
   const [customInput, setCustomInput] = useState("");
@@ -62,6 +63,13 @@ const StudioPanel = ({ notebookId, documents = [] }: StudioPanelProps) => {
       if (response.data.audio_url) {
         setAudioUrl(response.data.audio_url);
         // Autoplay handled by useEffect
+
+        // Optionally refresh parent or wait for user to reload?
+        // Ideally we should trigger a refetch of the notebook to get the new guide
+        // but for now, the user can just click the new guide after reload.
+        // Or we can assume the parent re-renders. 
+        // Actually, without a refetch, the guide won't appear in the list immediately.
+        // We can add a simple window.location.reload() or callback if needed, but let's stick to simple flow.
       } else {
         throw new Error("No audio URL returned");
       }
@@ -257,25 +265,26 @@ const StudioPanel = ({ notebookId, documents = [] }: StudioPanelProps) => {
         </div>
       </div>
 
-      {/* Documents List */}
+      {/* Audio Guides List */}
       <div className="flex-1 overflow-y-auto scrollbar-thin p-2">
-        <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 px-2">Sources</h3>
-        {documents.map((doc) => (
-          <div key={doc.id} className="source-item group">
-            <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center flex-shrink-0">
-              <FileText className="w-4 h-4 text-muted-foreground" />
+        {guides.filter(g => g.guide_type === 'audio').map((guide) => (
+          <div key={guide.id} className="source-item group cursor-pointer hover:bg-secondary/50 transition-colors" onClick={() => {
+            setAudioUrl(guide.content);
+          }}>
+            <div className="w-8 h-8 rounded-lg bg-notebook-teal/10 flex items-center justify-center flex-shrink-0 text-notebook-teal">
+              <Play className="w-4 h-4 fill-current" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm text-foreground truncate">{doc.title}</p>
+              <p className="text-sm text-foreground truncate">{guide.title}</p>
               <p className="text-xs text-muted-foreground">
-                {doc.word_count} words · {new Date(doc.created_at).toLocaleDateString()}
+                {new Date(guide.created_at).toLocaleDateString()}
               </p>
             </div>
           </div>
         ))}
-        {documents.length === 0 && (
+        {guides.filter(g => g.guide_type === 'audio').length === 0 && (
           <div className="text-center p-4 text-muted-foreground text-sm">
-            No documents available.
+            No audio overviews generated yet.
           </div>
         )}
       </div>

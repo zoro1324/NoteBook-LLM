@@ -97,7 +97,7 @@ class PodcastService:
         {instruction_text}
 
         Content:
-        {text[:30000]}... (truncated if too long)
+        {text[:12000]}... (truncated if too long)
 
         Return the output as a JSON object with a key 'conversation' which is a list of objects.
         Each object in the list should have 'speaker' and 'text' keys.
@@ -133,7 +133,10 @@ class PodcastService:
 
     def _generate_audio(self, script, roles, output_dir):
         """Convert script to audio"""
-        
+        if not script:
+             print("[PodcastService] Warning: Script is empty.")
+             return None
+             
         async def _generate_segment(text, voice, filename):
             communicate = edge_tts.Communicate(text, voice)
             await communicate.save(filename)

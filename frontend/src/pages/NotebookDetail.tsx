@@ -106,7 +106,11 @@ const NotebookDetail = () => {
           notebookId={notebookId!}
           selectedDocuments={selectedDocuments}
         />
-        <StudioPanel documents={notebook.documents || []} notebookId={notebookId!} />
+        <StudioPanel
+          documents={notebook.documents || []}
+          guides={notebook.guides || []}
+          notebookId={notebookId!}
+        />
       </main>
     </div>
   );

@@ -98,9 +98,11 @@ class NotebookGuide(models.Model):
         ('study', 'Study Guide'),
         ('summary', 'Briefing Document'),
         ('toc', 'Table of Contents'),
+        ('audio', 'Audio Overview'),
     ]
     
     documents = models.ManyToManyField(Document, related_name='guides')
+    notebook = models.ForeignKey('chat.Notebook', on_delete=models.CASCADE, related_name='guides', null=True, blank=True)
     guide_type = models.CharField(max_length=20, choices=GUIDE_TYPES)
     title = models.CharField(max_length=255)
     content = models.TextField()  # Markdown formatted content

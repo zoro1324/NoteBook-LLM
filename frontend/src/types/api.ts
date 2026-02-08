@@ -7,6 +7,15 @@ export interface Notebook {
   updated_at: string;
   is_public: boolean;
   documents?: Document[];
+  guides?: NotebookGuide[];
+}
+
+export interface NotebookGuide {
+  id: number;
+  guide_type: 'faq' | 'study' | 'summary' | 'toc' | 'audio';
+  title: string;
+  content: string;
+  created_at: string;
 }
 
 export interface Document {

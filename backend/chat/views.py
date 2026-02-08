@@ -11,7 +11,13 @@ from .serializers import (
     NotebookListSerializer, NotebookDetailSerializer,
     ConversationSerializer, MessageSerializer
 )
-from documents.models import Document, DocumentChunk
+
+from .models import Notebook, Conversation, Message, Citation
+from .serializers import (
+    NotebookListSerializer, NotebookDetailSerializer,
+    ConversationSerializer, MessageSerializer
+)
+from documents.models import Document, DocumentChunk, NotebookGuide
 from generation.podcast_service import podcast_service
 import os
 from django.conf import settings
@@ -111,9 +117,25 @@ class NotebookViewSet(viewsets.ModelViewSet):
             # Construct URL
             audio_url = request.build_absolute_uri(settings.MEDIA_URL + 'podcasts/' + filename)
             
+            # Save as NotebookGuide
+            guide_title = f"Audio Overview - {instruction}" if instruction else "Audio Overview"
+            if len(guide_title) > 255:
+                guide_title = guide_title[:252] + "..."
+                
+            guide = NotebookGuide.objects.create(
+                guide_type='audio',
+                title=guide_title,
+                content=audio_url,
+                notebook=notebook
+            )
+            
+            # Link to documents
+            guide.documents.set(notebook.documents.all())
+            
             return Response({
                 'status': 'success',
-                'audio_url': audio_url
+                'audio_url': audio_url,
+                'guide_id': guide.id
             })
             
         except Exception as e:
