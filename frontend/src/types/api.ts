@@ -21,7 +21,7 @@ export interface Document {
   processed: boolean;
   embedded: boolean;
   processing_error?: string;
-  uploaded_at: string;
+  created_at: string;
 }
 
 export interface Message {
